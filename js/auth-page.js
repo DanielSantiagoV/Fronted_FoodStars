@@ -276,3 +276,132 @@ async function handleRegisterSubmit(e) {
     }
 }
 
+/**
+ * Update password strength indicator
+ * @param {string} password - Password to check
+ */
+function updatePasswordStrength(password) {
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    
+    if (!strengthFill || !strengthText) return;
+    
+    // Remove all strength classes
+    strengthFill.classList.remove('weak', 'medium', 'strong');
+    
+    if (!password) {
+        strengthFill.style.width = '0';
+        strengthText.textContent = 'La contraseña debe tener al menos 8 caracteres';
+        return;
+    }
+    
+    let strength = 0;
+    const checks = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        numbers: /[0-9]/.test(password),
+        special: /[^A-Za-z0-9]/.test(password)
+    };
+    
+    // Calculate strength
+    Object.values(checks).forEach(check => {
+        if (check) strength++;
+    });
+    
+    // Update UI
+    if (strength <= 2) {
+        strengthFill.classList.add('weak');
+        strengthText.textContent = 'Contraseña débil';
+        strengthText.style.color = 'var(--danger)';
+    } else if (strength <= 4) {
+        strengthFill.classList.add('medium');
+        strengthText.textContent = 'Contraseña media';
+        strengthText.style.color = 'var(--warning)';
+    } else {
+        strengthFill.classList.add('strong');
+        strengthText.textContent = 'Contraseña fuerte';
+        strengthText.style.color = 'var(--success)';
+    }
+}
+
+/**
+ * Setup password strength monitor
+ */
+function setupPasswordStrength() {
+    const passwordInput = document.getElementById('registerPassword');
+    if (passwordInput) {
+        passwordInput.addEventListener('input', (e) => {
+            updatePasswordStrength(e.target.value);
+        });
+    }
+}
+
+/**
+ * Check if already authenticated
+ */
+function checkExistingAuth() {
+    if (isAuthenticated()) {
+        showToast('Ya has iniciado sesión', 'info');
+        setTimeout(() => {
+            const params = getQueryParams();
+            const redirectUrl = params.redirect || 'index.html';
+            window.location.href = redirectUrl;
+        }, 1500);
+    }
+}
+
+/**
+ * Initialize auth page
+ */
+function initAuthPage() {
+    // Check if already authenticated
+    checkExistingAuth();
+    
+    // Setup form handlers
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLoginSubmit);
+    }
+    
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegisterSubmit);
+    }
+    
+    // Setup password strength indicator
+    setupPasswordStrength();
+    
+    // Check for redirect parameter and show message
+    const params = getQueryParams();
+    if (params.redirect) {
+        showToast('Debes iniciar sesión para continuar', 'info');
+    }
+    
+    // Setup social auth buttons (placeholder)
+    document.querySelectorAll('.social-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            showToast('Autenticación social próximamente disponible', 'info');
+        });
+    });
+    
+    // Setup forgot password link
+    document.querySelectorAll('.forgot-password').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Recuperación de contraseña próximamente disponible', 'info');
+        });
+    });
+}
+
+// Initialize on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuthPage);
+} else {
+    initAuthPage();
+}
+
+// Export functions for global use
+window.switchTab = switchTab;
+window.togglePassword = togglePassword;
