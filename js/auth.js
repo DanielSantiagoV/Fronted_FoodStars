@@ -150,3 +150,189 @@ function requireAuth(redirectUrl = null) {
     }
     return true;
 }
+
+/**
+ * Require admin - redirect if not admin
+ */
+function requireAdmin() {
+    if (!isAuthenticated()) {
+        requireAuth();
+        return false;
+    }
+    
+    if (!isAdmin()) {
+        showToast('No tienes permisos para acceder a esta página', 'error');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Handle login
+ * @param {object} credentials - Login credentials
+ */
+async function handleLogin(credentials) {
+    try {
+        const response = await api.login(credentials);
+        
+        if (response.success && response.data) {
+            // Save auth data
+            saveAuthData(response.data.token, response.data.user);
+            
+            showToast(CONFIG.MESSAGES.SUCCESS.LOGIN, 'success');
+            
+            // Check for redirect parameter
+            const params = getQueryParams();
+            const redirectUrl = params.redirect || 'index.html';
+            
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 1000);
+        } else {
+            throw new Error(response.message || 'Error al iniciar sesión');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Handle registration
+ * @param {object} userData - Registration data
+ */
+async function handleRegister(userData) {
+    try {
+        const response = await api.register(userData);
+        
+        if (response.success && response.data) {
+            // Save auth data
+            saveAuthData(response.data.token, response.data.user);
+            
+            showToast(CONFIG.MESSAGES.SUCCESS.REGISTER, 'success');
+            
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            throw new Error(response.message || 'Error al registrarse');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Validate authentication token
+ */
+async function validateToken() {
+    if (!isAuthenticated()) {
+        return false;
+    }
+    
+    try {
+        // Try to get profile to validate token
+        const response = await api.getProfile();
+        
+        if (response.success) {
+            // Update user data in storage
+            const user = getCurrentUser();
+            if (user) {
+                saveAuthData(localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN), response.data);
+            }
+            return true;
+        } else {
+            // Token invalid, clear auth
+            clearAuthData();
+            return false;
+        }
+    } catch (error) {
+        // Token invalid or network error
+        if (error.message.includes('401') || error.message.includes('authorization')) {
+            clearAuthData();
+        }
+        return false;
+    }
+}
+
+/**
+ * Auto-login check on page load
+ */
+async function autoLoginCheck() {
+    if (isAuthenticated()) {
+        const isValid = await validateToken();
+        if (!isValid && window.location.pathname !== '/auth.html') {
+            showToast('Tu sesión ha expirado', 'warning');
+        }
+    }
+}
+
+/**
+ * Get user display name
+ * @returns {string} User display name
+ */
+function getUserDisplayName() {
+    const user = getCurrentUser();
+    if (!user) return 'Usuario';
+    
+    return user.nombre || user.username || user.email || 'Usuario';
+}
+
+/**
+ * Update user in storage
+ * @param {object} updatedUser - Updated user object
+ */
+function updateStoredUser(updatedUser) {
+    const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+    if (token && updatedUser) {
+        saveAuthData(token, updatedUser);
+        initAuthUI(); // Refresh UI
+    }
+}
+
+// Initialize auth UI on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initAuthUI();
+        autoLoginCheck();
+    });
+} else {
+    initAuthUI();
+    autoLoginCheck();
+}
+
+// Handle menu toggle for mobile
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    
+    if (menuToggle && navLinks) {
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+                navLinks.classList.remove('active');
+                menuToggle.classList.remove('active');
+            }
+        });
+        
+        // Close menu when clicking on a link
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                menuToggle.classList.remove('active');
+            });
+        });
+    }
+});
