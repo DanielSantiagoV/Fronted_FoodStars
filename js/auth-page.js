@@ -61,3 +61,218 @@ function togglePassword(inputId) {
     }
 }
 
+/**
+ * Clear all form errors
+ */
+function clearFormErrors() {
+    document.querySelectorAll('.form-error').forEach(error => {
+        error.textContent = '';
+    });
+    
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.classList.remove('error');
+    });
+}
+
+/**
+ * Show field error
+ * @param {string} fieldId - Field ID
+ * @param {string} message - Error message
+ */
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorSpan = document.getElementById(fieldId + 'Error');
+    
+    if (field) field.classList.add('error');
+    if (errorSpan) errorSpan.textContent = message;
+}
+
+/**
+ * Validate email format
+ * @param {string} email - Email to validate
+ * @returns {boolean} True if valid
+ */
+function validateEmailFormat(email) {
+    return validateEmail(email);
+}
+
+/**
+ * Validate login form
+ * @param {object} data - Form data
+ * @returns {boolean} True if valid
+ */
+function validateLoginForm(data) {
+    clearFormErrors();
+    let isValid = true;
+    
+    // Validate email
+    if (!data.email) {
+        showFieldError('loginEmail', 'El correo electrónico es requerido');
+        isValid = false;
+    } else if (!validateEmailFormat(data.email)) {
+        showFieldError('loginEmail', 'Ingresa un correo electrónico válido');
+        isValid = false;
+    }
+    
+    // Validate password
+    if (!data.password) {
+        showFieldError('loginPassword', 'La contraseña es requerida');
+        isValid = false;
+    } else if (data.password.length < CONFIG.VALIDATION.PASSWORD_MIN_LENGTH) {
+        showFieldError('loginPassword', `La contraseña debe tener al menos ${CONFIG.VALIDATION.PASSWORD_MIN_LENGTH} caracteres`);
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+/**
+ * Validate register form
+ * @param {object} data - Form data
+ * @returns {boolean} True if valid
+ */
+function validateRegisterForm(data) {
+    clearFormErrors();
+    let isValid = true;
+    
+    // Validate name
+    if (!data.nombre) {
+        showFieldError('registerName', 'El nombre es requerido');
+        isValid = false;
+    } else if (data.nombre.length < CONFIG.VALIDATION.USERNAME_MIN_LENGTH) {
+        showFieldError('registerName', `El nombre debe tener al menos ${CONFIG.VALIDATION.USERNAME_MIN_LENGTH} caracteres`);
+        isValid = false;
+    }
+    
+    // Validate email
+    if (!data.email) {
+        showFieldError('registerEmail', 'El correo electrónico es requerido');
+        isValid = false;
+    } else if (!validateEmailFormat(data.email)) {
+        showFieldError('registerEmail', 'Ingresa un correo electrónico válido');
+        isValid = false;
+    }
+    
+    // Validate password
+    if (!data.password) {
+        showFieldError('registerPassword', 'La contraseña es requerida');
+        isValid = false;
+    } else {
+        const passwordValidation = validatePassword(data.password);
+        if (!passwordValidation.isValid) {
+            showFieldError('registerPassword', passwordValidation.message);
+            isValid = false;
+        }
+    }
+    
+    // Validate confirm password
+    if (!data.confirmPassword) {
+        showFieldError('registerConfirmPassword', 'Debes confirmar la contraseña');
+        isValid = false;
+    } else if (data.password !== data.confirmPassword) {
+        showFieldError('registerConfirmPassword', 'Las contraseñas no coinciden');
+        isValid = false;
+    }
+    
+    // Validate terms acceptance
+    if (!data.acceptTerms) {
+        showFieldError('acceptTerms', 'Debes aceptar los términos y condiciones');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+/**
+ * Handle login form submission
+ * @param {Event} e - Submit event
+ */
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    // Validate form
+    if (!validateLoginForm(data)) {
+        return;
+    }
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span>Iniciando sesión...</span>';
+    
+    try {
+        // Call login function from auth.js
+        await handleLogin({
+            email: data.email,
+            password: data.password
+        });
+        
+        // Success feedback (toast shown in handleLogin)
+        form.classList.add('form-success');
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        // Show error message
+        const errorMessage = error.message || CONFIG.MESSAGES.ERROR.GENERIC;
+        showToast(errorMessage, 'error');
+        
+        // Re-enable button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+/**
+ * Handle register form submission
+ * @param {Event} e - Submit event
+ */
+async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    // Convert checkbox to boolean
+    data.acceptTerms = formData.get('acceptTerms') === 'on';
+    
+    // Validate form
+    if (!validateRegisterForm(data)) {
+        return;
+    }
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span>Creando cuenta...</span>';
+    
+    try {
+        // Remove confirmPassword from data before sending
+        const { confirmPassword, acceptTerms, ...registerData } = data;
+        
+        // Call register function from auth.js
+        await handleRegister(registerData);
+        
+        // Success feedback (toast shown in handleRegister)
+        form.classList.add('form-success');
+        
+    } catch (error) {
+        console.error('Register error:', error);
+        
+        // Show error message
+        const errorMessage = error.message || CONFIG.MESSAGES.ERROR.GENERIC;
+        showToast(errorMessage, 'error');
+        
+        // Re-enable button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
