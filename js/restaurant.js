@@ -407,3 +407,187 @@ async function loadRestaurants() {
         `;
     }
 }
+
+/**
+ * Display restaurants
+ * @param {array} restaurantsToDisplay - Restaurants to display
+ */
+function displayRestaurants(restaurantsToDisplay) {
+    const grid = document.getElementById('restaurantsGrid');
+    
+    if (!restaurantsToDisplay || restaurantsToDisplay.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <h3>No se encontraron restaurantes</h3>
+                <p>Intenta ajustar tus filtros de búsqueda</p>
+                <button class="btn-primary" onclick="resetFilters()">Limpiar Filtros</button>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = '';
+    
+    restaurantsToDisplay.forEach(restaurant => {
+        const card = createRestaurantCard(restaurant);
+        grid.appendChild(card);
+    });
+}
+
+/**
+ * Create restaurant card
+ * @param {object} restaurant - Restaurant data
+ * @returns {HTMLElement} Restaurant card
+ */
+function createRestaurantCard(restaurant) {
+    const card = document.createElement('div');
+    card.className = 'restaurant-card';
+    card.onclick = () => navigateToRestaurant(restaurant._id);
+    
+    const rating = restaurant.promedioCalificacion || 0;
+    const reviewCount = restaurant.totalReseñas || 0;
+    const stars = generateStars(rating);
+    const isPopular = restaurant.popularidad > 70 || reviewCount > 20;
+    
+    card.innerHTML = `
+        <div class="restaurant-image">
+            ${isPopular ? '<span class="restaurant-badge">⭐ Popular</span>' : ''}
+        </div>
+        <div class="restaurant-content">
+            <div class="restaurant-header">
+                <h3>${sanitizeHTML(restaurant.nombre)}</h3>
+                <div class="rating">
+                    <span class="stars">${stars}</span>
+                    <span>${rating.toFixed(1)}</span>
+                </div>
+            </div>
+            <p>${truncateText(sanitizeHTML(restaurant.descripcion || 'Descubre este increíble restaurante'), 120)}</p>
+            <div class="restaurant-meta">
+                <span class="category-tag">${restaurant.categoria || 'General'}</span>
+                <span class="reviews-count">💬 ${formatNumber(reviewCount)} reseñas</span>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+/**
+ * Navigate to restaurant detail
+ * @param {string} restaurantId - Restaurant ID
+ */
+function navigateToRestaurant(restaurantId) {
+    window.location.href = `restaurant-detail.html?id=${restaurantId}`;
+}
+
+/**
+ * Update results info
+ * @param {number} total - Total results
+ */
+function updateResultsInfo(total) {
+    const title = document.getElementById('resultsTitle');
+    const count = document.getElementById('resultsCount');
+    
+    if (filters.search) {
+        title.textContent = `Resultados para "${filters.search}"`;
+    } else if (filters.category) {
+        title.textContent = `Categoría: ${filters.category}`;
+    } else {
+        title.textContent = 'Todos los Restaurantes';
+    }
+    
+    count.textContent = `${formatNumber(total)} restaurante${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}`;
+}
+
+/**
+ * Set view mode
+ * @param {string} view - View mode ('grid' or 'list')
+ */
+function setView(view) {
+    currentView = view;
+    
+    const grid = document.getElementById('restaurantsGrid');
+    const gridBtn = document.getElementById('gridView');
+    const listBtn = document.getElementById('listView');
+    
+    if (view === 'grid') {
+        grid.classList.remove('list-view');
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    } else {
+        grid.classList.add('list-view');
+        gridBtn.classList.remove('active');
+        listBtn.classList.add('active');
+    }
+}
+
+/**
+ * Update pagination
+ */
+function updatePagination() {
+    const pagination = document.getElementById('pagination');
+    const pagesContainer = document.getElementById('paginationPages');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    
+    // Update prev/next buttons
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+    
+    // Generate page buttons
+    pagesContainer.innerHTML = '';
+    
+    const maxPages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(totalPages, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+        startPage = Math.max(1, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn';
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.onclick = () => changePage(i);
+        pagesContainer.appendChild(btn);
+    }
+}
+
+/**
+ * Change page
+ * @param {number} page - Page number
+ */
+function changePage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    
+    currentPage = page;
+    updateURLAndReload();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Initialize page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initPage();
+        setupRatingFilter();
+    });
+} else {
+    initPage();
+    setupRatingFilter();
+}
+
+// Export functions for global use
+window.handleCategoryChange = handleCategoryChange;
+window.removeFilter = removeFilter;
+window.resetFilters = resetFilters;
+window.loadRestaurants = loadRestaurants;
