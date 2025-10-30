@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Detalles del restaurante">
     <title>Restaurante - FoodieRank</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/restaurant-detail.css">
+    <link rel="stylesheet" href="..//css/style.css">
+    <link rel="stylesheet" href="..//css/restaurant-detail.css">
 </head>
 <body>
     <!-- Animated Background -->
@@ -20,7 +20,7 @@
     <header class="header">
         <nav class="navbar">
             <div class="nav-container">
-                <div class="logo" onclick="window.location.href='index.html'">
+                <div class="logo" onclick="window.location.href='../index.html'">
                     <div class="logo-icon">
                         <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                             <circle cx="20" cy="20" r="18" fill="url(#logoGradient)"/>
@@ -43,12 +43,12 @@
                 </div>
                 
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="index.html" class="nav-link">Inicio</a></li>
-                    <li><a href="restaurants.html" class="nav-link">Restaurantes</a></li>
-                    <li><a href="index.html#categories" class="nav-link">Categorías</a></li>
-                    <li><a href="index.html#about" class="nav-link">Nosotros</a></li>
+                    <li><a href="../index.html" class="nav-link">Inicio</a></li>
+                    <li><a href="../html/restaurants.html" class="nav-link">Restaurantes</a></li>
+                    <li><a href="../index.html#categories" class="nav-link">Categorías</a></li>
+                    <li><a href="../index.html#about" class="nav-link">Nosotros</a></li>
                     <li class="auth-links">
-                        <a href="auth.html" class="btn-outline" id="navAuthLink">
+                        <a href="../html/auth.html" class="btn-outline" id="navAuthLink">
                             <span>Iniciar Sesión</span>
                         </a>
                     </li>
@@ -63,7 +63,7 @@
                                 </svg>
                                 Mi Perfil
                             </a>
-                            <a href="admin.html" id="adminLink" style="display: none;">
+                            <a href="../html/admin.html" id="adminLink" style="display: none;">
                                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
                                 </svg>
@@ -129,4 +129,201 @@
                             </button>
                         </div>
 
-                      
+                        <!-- Review Form (Hidden by default) -->
+                        <div class="review-form-container" id="reviewFormContainer" style="display: none;">
+                            <form class="review-form" id="reviewForm">
+                                <h3>Comparte tu experiencia</h3>
+                                
+                                <div class="form-group">
+                                    <label>Calificación</label>
+                                    <div class="star-rating" id="starRating">
+                                        <button type="button" class="star-btn" data-rating="1">☆</button>
+                                        <button type="button" class="star-btn" data-rating="2">☆</button>
+                                        <button type="button" class="star-btn" data-rating="3">☆</button>
+                                        <button type="button" class="star-btn" data-rating="4">☆</button>
+                                        <button type="button" class="star-btn" data-rating="5">☆</button>
+                                    </div>
+                                    <input type="hidden" id="ratingInput" name="calificacion" required>
+                                    <span class="form-error" id="ratingError"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="reviewComment">Tu reseña</label>
+                                    <textarea 
+                                        id="reviewComment" 
+                                        name="comentario"
+                                        rows="5"
+                                        placeholder="Cuéntanos sobre tu experiencia en este restaurante..."
+                                        required
+                                        minlength="10"
+                                        maxlength="1000"
+                                    ></textarea>
+                                    <div class="char-count">
+                                        <span id="charCount">0</span>/1000 caracteres
+                                    </div>
+                                    <span class="form-error" id="commentError"></span>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" class="btn-outline" onclick="cancelReview()">Cancelar</button>
+                                    <button type="submit" class="btn-primary">Publicar Reseña</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Reviews List -->
+                        <div class="reviews-list" id="reviewsList">
+                            <div class="loading-state">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+
+                        <!-- Load More -->
+                        <div class="load-more" id="loadMoreContainer" style="display: none;">
+                            <button class="btn-outline btn-large" id="loadMoreBtn">
+                                Ver más reseñas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Sidebar -->
+                <aside class="sidebar-column">
+                    <!-- Quick Actions -->
+                    <div class="action-card">
+                        <h3>Acciones Rápidas</h3>
+                        <div class="action-buttons">
+                            <button class="action-btn" id="shareBtn">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                </svg>
+                                <span>Compartir</span>
+                            </button>
+                            <button class="action-btn" id="favoriteBtn">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                                <span>Favorito</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rating Breakdown -->
+                    <div class="stats-card" id="ratingBreakdown">
+                        <h3>Distribución de Calificaciones</h3>
+                        <div class="rating-bars" id="ratingBars">
+                            <div class="loading-state">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Card -->
+                    <div class="location-card" id="locationCard">
+                        <h3>Ubicación</h3>
+                        <div class="location-info">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <p id="locationText">Cargando...</p>
+                        </div>
+                        <button class="btn-outline btn-block" id="directionsBtn">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            </svg>
+                            Ver en Mapa
+                        </button>
+                    </div>
+
+                    <!-- Similar Restaurants -->
+                    <div class="similar-card">
+                        <h3>Restaurantes Similares</h3>
+                        <div class="similar-list" id="similarList">
+                            <div class="loading-state">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <!-- Edit Review Modal -->
+    <div class="modal" id="editReviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Reseña</h2>
+                <button class="modal-close" onclick="closeEditModal()">×</button>
+            </div>
+            <form id="editReviewForm">
+                <div class="form-group">
+                    <label>Calificación</label>
+                    <div class="star-rating" id="editStarRating">
+                        <button type="button" class="star-btn" data-rating="1">☆</button>
+                        <button type="button" class="star-btn" data-rating="2">☆</button>
+                        <button type="button" class="star-btn" data-rating="3">☆</button>
+                        <button type="button" class="star-btn" data-rating="4">☆</button>
+                        <button type="button" class="star-btn" data-rating="5">☆</button>
+                    </div>
+                    <input type="hidden" id="editRatingInput" name="calificacion" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editReviewComment">Tu reseña</label>
+                    <textarea 
+                        id="editReviewComment" 
+                        name="comentario"
+                        rows="5"
+                        required
+                        minlength="10"
+                        maxlength="1000"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="editCharCount">0</span>/1000 caracteres
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Actualizar Reseña</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Eliminar Reseña</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar esta reseña? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="form-actions">
+                <button class="btn-outline" onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon"></div>
+        <div class="toast-content">
+            <div class="toast-title"></div>
+            <div class="toast-message"></div>
+        </div>
+        <button class="toast-close" onclick="hideToast()">×</button>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/restaurante-detail.js"></script>
+</body>
+</html>
