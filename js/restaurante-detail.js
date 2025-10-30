@@ -244,3 +244,336 @@ async function loadReviews() {
         list.innerHTML = '<p style="color: var(--danger); text-align: center;">Error al cargar reseñas</p>';
     }
 }
+
+/**
+ * Display reviews
+ */
+function displayReviews(reviewsToDisplay) {
+    const list = document.getElementById('reviewsList');
+    const currentUser = getCurrentUser();
+    
+    if (!reviewsToDisplay || reviewsToDisplay.length === 0) {
+        list.innerHTML = '<p style="color: var(--gray-600); text-align: center; padding: 2rem;">No hay reseñas aún. ¡Sé el primero en escribir una!</p>';
+        return;
+    }
+    
+    list.innerHTML = reviewsToDisplay.map(review => {
+        const isOwner = currentUser && review.usuario && (review.usuario._id === currentUser._id || review.usuario === currentUser._id);
+        const userName = review.usuario?.nombre || review.usuario?.email || 'Usuario';
+        const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        const stars = generateStars(review.calificacion);
+        
+        return `
+            <div class="review-card" data-review-id="${review._id}">
+                <div class="review-header">
+                    <div class="review-user">
+                        <div class="review-avatar">${userInitials}</div>
+                        <div class="review-user-info">
+                            <h4>${sanitizeHTML(userName)}</h4>
+                            <div class="review-date">${formatRelativeTime(review.fechaCreacion)}</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        <span class="review-stars">${stars}</span>
+                        <span>${review.calificacion}</span>
+                    </div>
+                </div>
+                
+                <div class="review-content">
+                    <p>${sanitizeHTML(review.comentario)}</p>
+                </div>
+                
+                <div class="review-actions">
+                    ${isAuthenticated() && !isOwner ? `
+                        <button class="review-action-btn ${review.userReaction === 'like' ? 'liked' : ''}" onclick="handleLike('${review._id}')">
+                            <svg width="20" height="20" fill="${review.userReaction === 'like' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                            </svg>
+                            <span>${review.likes || 0}</span>
+                        </button>
+                        <button class="review-action-btn ${review.userReaction === 'dislike' ? 'disliked' : ''}" onclick="handleDislike('${review._id}')">
+                            <svg width="20" height="20" fill="${review.userReaction === 'dislike' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"/>
+                            </svg>
+                            <span>${review.dislikes || 0}</span>
+                        </button>
+                    ` : `
+                        <div style="display: flex; gap: 1rem;">
+                            <span style="color: var(--gray-600); font-size: 0.9rem;">👍 ${review.likes || 0}</span>
+                            <span style="color: var(--gray-600); font-size: 0.9rem;">👎 ${review.dislikes || 0}</span>
+                        </div>
+                    `}
+                    
+                    ${isOwner ? `
+                        <div class="review-menu">
+                            <button class="review-menu-btn" onclick="toggleReviewMenu('${review._id}')">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                                </svg>
+                            </button>
+                            <div class="review-dropdown" id="menu-${review._id}">
+                                <button onclick="editReview('${review._id}')">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Editar
+                                </button>
+                                <button class="danger" onclick="confirmDeleteReview('${review._id}')">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Check if user already has a review
+ */
+function checkUserReview() {
+    if (!isAuthenticated()) {
+        document.getElementById('writeReviewBtn').style.display = 'none';
+        return;
+    }
+    
+    const currentUser = getCurrentUser();
+    userReview = reviews.find(r => r.usuario && (r.usuario._id === currentUser._id || r.usuario === currentUser._id));
+    
+    const writeBtn = document.getElementById('writeReviewBtn');
+    if (userReview) {
+        writeBtn.style.display = 'none';
+    } else {
+        writeBtn.style.display = 'flex';
+    }
+}
+
+/**
+ * Setup star rating
+ */
+function setupStarRating(containerId, inputId) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    
+    if (!container || !input) return;
+    
+    const stars = container.querySelectorAll('.star-btn');
+    
+    stars.forEach((star, index) => {
+        star.addEventListener('click', () => {
+            const rating = index + 1;
+            input.value = rating;
+            
+            // Update star display
+            stars.forEach((s, i) => {
+                if (i < rating) {
+                    s.textContent = '★';
+                    s.classList.add('active');
+                } else {
+                    s.textContent = '☆';
+                    s.classList.remove('active');
+                }
+            });
+        });
+    });
+}
+
+/**
+ * Show review form
+ */
+function showReviewForm() {
+    if (!requireAuth()) return;
+    
+    const container = document.getElementById('reviewFormContainer');
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('writeReviewBtn').style.display = 'none';
+}
+
+/**
+ * Cancel review
+ */
+function cancelReview() {
+    document.getElementById('reviewFormContainer').style.display = 'none';
+    document.getElementById('reviewForm').reset();
+    document.getElementById('ratingInput').value = '';
+    document.querySelectorAll('#starRating .star-btn').forEach(s => {
+        s.textContent = '☆';
+        s.classList.remove('active');
+    });
+    document.getElementById('charCount').textContent = '0';
+    
+    if (!userReview) {
+        document.getElementById('writeReviewBtn').style.display = 'flex';
+    }
+}
+
+/**
+ * Handle review submit
+ */
+async function handleReviewSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const rating = document.getElementById('ratingInput').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+    
+    if (!rating) {
+        showToast('Por favor selecciona una calificación', 'warning');
+        return;
+    }
+    
+    if (comment.length < 10) {
+        showToast('La reseña debe tener al menos 10 caracteres', 'warning');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Publicando...';
+    
+    try {
+        const response = await api.createReview({
+            restaurante: restaurantId,
+            calificacion: parseInt(rating),
+            comentario: comment
+        });
+        
+        if (response.success) {
+            showToast(CONFIG.MESSAGES.SUCCESS.REVIEW_CREATED, 'success');
+            cancelReview();
+            await loadReviews();
+            await loadRestaurant(); // Refresh rating
+        } else {
+            throw new Error(response.message || 'Error al crear reseña');
+        }
+    } catch (error) {
+        console.error('Error creating review:', error);
+        showToast(error.message || CONFIG.MESSAGES.ERROR.GENERIC, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+/**
+ * Update character count
+ */
+function updateCharCount(e) {
+    const count = e.target.value.length;
+    document.getElementById('charCount').textContent = count;
+}
+
+/**
+ * Update edit character count
+ */
+function updateEditCharCount(e) {
+    const count = e.target.value.length;
+    document.getElementById('editCharCount').textContent = count;
+}
+
+/**
+ * Toggle review menu
+ */
+function toggleReviewMenu(reviewId) {
+    const menu = document.getElementById(`menu-${reviewId}`);
+    const allMenus = document.querySelectorAll('.review-dropdown');
+    
+    allMenus.forEach(m => {
+        if (m !== menu) m.classList.remove('active');
+    });
+    
+    menu.classList.toggle('active');
+}
+
+/**
+ * Edit review
+ */
+function editReview(reviewId) {
+    const review = reviews.find(r => r._id === reviewId);
+    if (!review) return;
+    
+    currentEditReviewId = reviewId;
+    
+    // Set form values
+    document.getElementById('editRatingInput').value = review.calificacion;
+    document.getElementById('editReviewComment').value = review.comentario;
+    document.getElementById('editCharCount').textContent = review.comentario.length;
+    
+    // Set stars
+    const stars = document.querySelectorAll('#editStarRating .star-btn');
+    stars.forEach((star, index) => {
+        if (index < review.calificacion) {
+            star.textContent = '★';
+            star.classList.add('active');
+        } else {
+            star.textContent = '☆';
+            star.classList.remove('active');
+        }
+    });
+    
+    // Show modal
+    document.getElementById('editReviewModal').classList.add('active');
+    
+    // Close dropdown
+    toggleReviewMenu(reviewId);
+}
+
+/**
+ * Close edit modal
+ */
+function closeEditModal() {
+    document.getElementById('editReviewModal').classList.remove('active');
+    currentEditReviewId = null;
+}
+
+/**
+ * Handle edit review submit
+ */
+async function handleEditReviewSubmit(e) {
+    e.preventDefault();
+    
+    if (!currentEditReviewId) return;
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const rating = document.getElementById('editRatingInput').value;
+    const comment = document.getElementById('editReviewComment').value.trim();
+    
+    if (!rating || comment.length < 10) {
+        showToast('Por favor completa todos los campos correctamente', 'warning');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Actualizando...';
+    
+    try {
+        const response = await api.updateReview(currentEditReviewId, {
+            calificacion: parseInt(rating),
+            comentario: comment
+        });
+        
+        if (response.success) {
+            showToast(CONFIG.MESSAGES.SUCCESS.REVIEW_UPDATED, 'success');
+            closeEditModal();
+            await loadReviews();
+            await loadRestaurant();
+        } else {
+            throw new Error(response.message || 'Error al actualizar reseña');
+        }
+    } catch (error) {
+        console.error('Error updating review:', error);
+        showToast(error.message || CONFIG.MESSAGES.ERROR.GENERIC, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
