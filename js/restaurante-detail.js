@@ -577,3 +577,233 @@ async function handleEditReviewSubmit(e) {
         submitBtn.textContent = originalText;
     }
 }
+
+/**
+ * Confirm delete review
+ */
+function confirmDeleteReview(reviewId) {
+    currentEditReviewId = reviewId;
+    document.getElementById('deleteModal').classList.add('active');
+    toggleReviewMenu(reviewId);
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.onclick = () => deleteReview(reviewId);
+}
+
+/**
+ * Close delete modal
+ */
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    currentEditReviewId = null;
+}
+
+/**
+ * Delete review
+ */
+async function deleteReview(reviewId) {
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.disabled = true;
+    const originalText = confirmBtn.textContent;
+    confirmBtn.textContent = 'Eliminando...';
+    
+    try {
+        const response = await api.deleteReview(reviewId);
+        
+        if (response.success) {
+            showToast(CONFIG.MESSAGES.SUCCESS.REVIEW_DELETED, 'success');
+            closeDeleteModal();
+            await loadReviews();
+            await loadRestaurant();
+        } else {
+            throw new Error(response.message || 'Error al eliminar reseña');
+        }
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        showToast(error.message || CONFIG.MESSAGES.ERROR.GENERIC, 'error');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+    }
+}
+
+/**
+ * Handle like
+ */
+async function handleLike(reviewId) {
+    if (!requireAuth()) return;
+    
+    try {
+        await api.likeReview(reviewId);
+        await loadReviews();
+    } catch (error) {
+        console.error('Error liking review:', error);
+        showToast('Error al dar like', 'error');
+    }
+}
+
+/**
+ * Handle dislike
+ */
+async function handleDislike(reviewId) {
+    if (!requireAuth()) return;
+    
+    try {
+        await api.dislikeReview(reviewId);
+        await loadReviews();
+    } catch (error) {
+        console.error('Error disliking review:', error);
+        showToast('Error al dar dislike', 'error');
+    }
+}
+
+/**
+ * Display rating breakdown
+ */
+function displayRatingBreakdown(rest) {
+    const container = document.getElementById('ratingBars');
+    
+    // Mock data - adjust based on your API
+    const breakdown = [
+        { stars: 5, count: Math.floor((rest.totalReseñas || 0) * 0.5) },
+        { stars: 4, count: Math.floor((rest.totalReseñas || 0) * 0.25) },
+        { stars: 3, count: Math.floor((rest.totalReseñas || 0) * 0.15) },
+        { stars: 2, count: Math.floor((rest.totalReseñas || 0) * 0.07) },
+        { stars: 1, count: Math.floor((rest.totalReseñas || 0) * 0.03) }
+    ];
+    
+    const total = rest.totalReseñas || 1;
+    
+    container.innerHTML = breakdown.map(item => {
+        const percentage = (item.count / total) * 100;
+        return `
+            <div class="rating-bar-item">
+                <div class="rating-bar-label">${item.stars} ⭐</div>
+                <div class="rating-bar">
+                    <div class="rating-bar-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div class="rating-bar-count">${item.count}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Display location
+ */
+function displayLocation(rest) {
+    const locationText = document.getElementById('locationText');
+    locationText.textContent = rest.ubicacion || 'Ubicación no especificada';
+}
+
+/**
+ * Load similar restaurants
+ */
+async function loadSimilarRestaurants(category) {
+    const container = document.getElementById('similarList');
+    
+    try {
+        const response = await api.getRestaurants({
+            categoria: category,
+            limit: 3
+        });
+        
+        if (response.success && response.data && response.data.length > 0) {
+            const filtered = response.data.filter(r => r._id !== restaurantId).slice(0, 3);
+            displaySimilarRestaurants(filtered);
+        } else {
+            container.innerHTML = '<p style="color: var(--gray-600); font-size: 0.9rem;">No hay restaurantes similares</p>';
+        }
+    } catch (error) {
+        console.error('Error loading similar restaurants:', error);
+        container.innerHTML = '<p style="color: var(--gray-600); font-size: 0.9rem;">No hay restaurantes similares</p>';
+    }
+}
+
+/**
+ * Display similar restaurants
+ */
+function displaySimilarRestaurants(restaurants) {
+    const container = document.getElementById('similarList');
+    
+    container.innerHTML = restaurants.map(rest => `
+        <div class="similar-item" onclick="window.location.href='restaurant-detail.html?id=${rest._id}'">
+            <div class="similar-icon">🍽️</div>
+            <div class="similar-info">
+                <h4>${sanitizeHTML(rest.nombre)}</h4>
+                <p>⭐ ${(rest.promedioCalificacion || 0).toFixed(1)} • ${rest.totalReseñas || 0} reseñas</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Update load more button
+ */
+function updateLoadMoreButton(pagination) {
+    const container = document.getElementById('loadMoreContainer');
+    const btn = document.getElementById('loadMoreBtn');
+    
+    if (pagination && pagination.page < pagination.totalPages) {
+        hasMoreReviews = true;
+        container.style.display = 'block';
+    } else {
+        hasMoreReviews = false;
+        container.style.display = 'none';
+    }
+}
+
+/**
+ * Load more reviews
+ */
+async function loadMoreReviews() {
+    reviewsPage++;
+    // Implementation depends on your API pagination
+    showToast('Función próximamente disponible', 'info');
+}
+
+/**
+ * Handle share
+ */
+function handleShare() {
+    if (navigator.share) {
+        navigator.share({
+            title: restaurant.nombre,
+            text: `Mira este restaurante en FoodieRank: ${restaurant.nombre}`,
+            url: window.location.href
+        }).catch(() => {
+            copyToClipboard(window.location.href);
+        });
+    } else {
+        copyToClipboard(window.location.href);
+    }
+}
+
+/**
+ * Handle directions
+ */
+function handleDirections() {
+    if (restaurant && restaurant.ubicacion) {
+        const query = encodeURIComponent(restaurant.ubicacion);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    } else {
+        showToast('Ubicación no disponible', 'warning');
+    }
+}
+
+// Initialize page
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage);
+} else {
+    initPage();
+}
+
+// Export functions for global use
+window.cancelReview = cancelReview;
+window.toggleReviewMenu = toggleReviewMenu;
+window.editReview = editReview;
+window.confirmDeleteReview = confirmDeleteReview;
+window.closeEditModal = closeEditModal;
+window.closeDeleteModal = closeDeleteModal;
+window.handleLike = handleLike;
+window.handleDislike = handleDislike;
