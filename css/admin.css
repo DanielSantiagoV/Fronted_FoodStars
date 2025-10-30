@@ -580,11 +580,49 @@ body {
 }
 
 .modal-content .form-group label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 600;
     color: var(--dark);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     font-size: 0.95rem;
+}
+
+.label-text {
+    flex: 1;
+}
+
+.label-required {
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.label-optional {
+    color: var(--gray-500);
+    font-weight: 500;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--gray-500);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-with-icon input,
+.input-with-icon select {
+    padding-left: 3rem;
 }
 
 .modal-content .form-group input[type="text"],
@@ -602,6 +640,11 @@ body {
     font-family: inherit;
 }
 
+.modal-content .form-group input::placeholder,
+.modal-content .form-group textarea::placeholder {
+    color: var(--gray-500);
+}
+
 .modal-content .form-group input:focus,
 .modal-content .form-group textarea:focus,
 .modal-content .form-group select:focus {
@@ -613,6 +656,7 @@ body {
 .modal-content .form-group textarea {
     resize: vertical;
     min-height: 100px;
+    line-height: 1.6;
 }
 
 .modal-content .form-group select {
@@ -622,6 +666,214 @@ body {
     background-repeat: no-repeat;
     background-position: right 1rem center;
     padding-right: 3rem;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.form-section-header svg {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.form-section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+}
+
+/* Character Count */
+.char-count-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.char-count {
+    color: var(--gray-700);
+    font-weight: 600;
+}
+
+.char-limit {
+    color: var(--gray-500);
+}
+
+/* Modal Header Improvements */
+.modal-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-xl);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Form Footer */
+.form-footer {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--gray-200);
+}
+
+.form-footer-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+}
+
+.form-footer-note svg {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.form-footer-note strong {
+    color: var(--danger);
+}
+
+/* Improved Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.form-actions button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all var(--transition-base);
+}
+
+.form-actions button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.form-actions .btn-primary {
+    min-width: 180px;
+}
+
+.form-actions .btn-outline:hover {
+    transform: translateX(-3px);
+}
+
+.form-actions .btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+/* Delete Modal Specific Styles */
+.modal-header-danger {
+    border-bottom-color: var(--danger-light);
+}
+
+.modal-icon-danger {
+    background: var(--danger);
+}
+
+.delete-warning {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.delete-warning svg {
+    width: 64px;
+    height: 64px;
+    color: var(--danger);
+    margin: 0 auto 1rem;
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.delete-warning p {
+    font-size: 1.05rem;
+    color: var(--gray-700);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.modal-small .form-actions {
+    justify-content: center;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.modal-small .form-actions button {
+    flex: 1;
+    justify-content: center;
+}
+
+/* Button hover effects with icons */
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border: 2px solid var(--danger);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    border-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Modal Content Max Width */
+.modal-large .modal-content {
+    max-width: 900px;
 }
 
 /* Review Card Styles in Admin */
@@ -884,5 +1136,139 @@ button:focus {
 
     .admin-main {
         padding: 0;
+    }
+}
+
+/* Dishes Admin Grid */
+.dishes-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.dish-admin-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 2px solid var(--gray-200);
+    transition: all var(--transition-base);
+}
+
+.dish-admin-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.dish-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.dish-admin-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.dish-admin-card h3 {
+    font-size: 1.25rem;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+}
+
+.dish-restaurant-name {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.dish-admin-card p {
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.dish-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.dish-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.dish-actions button {
+    flex: 1;
+}
+
+/* Filter Bar */
+.filter-bar {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+}
+
+/* Status Badge in Table */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.approved {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.status-badge.pending {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.status-badge svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Approve Button */
+.btn-success {
+    background: var(--success);
+    color: white;
+    border: 2px solid var(--success);
+}
+
+.btn-success:hover {
+    background: #218838;
+    border-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 768px) {
+    .dishes-admin-grid {
+        grid-template-columns: 1fr;
     }
 }
