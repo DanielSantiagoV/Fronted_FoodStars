@@ -284,3 +284,160 @@ function sanitizeHTML(html) {
     return temp.innerHTML;
 }
 
+/**
+ * Copy text to clipboard
+ * @param {string} text - Text to copy
+ */
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('Copiado al portapapeles', 'success');
+    } catch (err) {
+        showToast('Error al copiar', 'error');
+    }
+}
+
+/**
+ * Check if user is mobile
+ * @returns {boolean} True if mobile device
+ */
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
+ * Generate random ID
+ * @returns {string} Random ID
+ */
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+/**
+ * Initialize tooltips (if you add tooltip library later)
+ */
+function initTooltips() {
+    // Placeholder for tooltip initialization
+    console.log('Tooltips initialized');
+}
+
+/**
+ * Lazy load images
+ */
+function lazyLoadImages() {
+    const images = document.querySelectorAll('img[data-src]');
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                observer.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+/**
+ * Add event listener with delegation
+ * @param {string} selector - CSS selector
+ * @param {string} event - Event name
+ * @param {function} handler - Event handler
+ */
+function delegateEvent(selector, event, handler) {
+    document.addEventListener(event, (e) => {
+        const target = e.target.closest(selector);
+        if (target) {
+            handler.call(target, e);
+        }
+    });
+}
+
+/**
+ * Initialize scroll animations
+ */
+function initScrollAnimations() {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        },
+        { threshold: 0.1 }
+    );
+    
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+/**
+ * Handle form submission with validation
+ * @param {string} formId - Form ID
+ * @param {function} onSubmit - Submit handler
+ */
+function handleFormSubmit(formId, onSubmit) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Disable submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Procesando...';
+        }
+        
+        try {
+            await onSubmit(data);
+        } catch (error) {
+            showToast(error.message || CONFIG.MESSAGES.ERROR.GENERIC, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar';
+            }
+        }
+    });
+}
+
+/**
+ * Add smooth scroll to header on page scroll
+ */
+function initHeaderScroll() {
+    let lastScroll = 0;
+    const header = document.querySelector('.header');
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 100) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+        
+        lastScroll = currentScroll;
+    });
+}
+
+// Initialize on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initHeaderScroll();
+        lazyLoadImages();
+    });
+} else {
+    initHeaderScroll();
+    lazyLoadImages();
+}
