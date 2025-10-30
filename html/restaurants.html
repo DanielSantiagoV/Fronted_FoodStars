@@ -121,4 +121,127 @@
         </div>
     </section>
 
-   
+    <!-- Main Content -->
+    <section class="main-content">
+        <div class="container">
+            <div class="content-layout">
+                <!-- Sidebar Filters -->
+                <aside class="sidebar-filters" id="sidebarFilters">
+                    <div class="filters-header">
+                        <h3>Filtros</h3>
+                        <button class="btn-text" id="clearFilters">Limpiar todo</button>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="filter-group">
+                        <h4>Categorías</h4>
+                        <div class="filter-options" id="categoryFilters">
+                            <div class="loading-state">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Filter -->
+                    <div class="filter-group">
+                        <h4>Calificación Mínima</h4>
+                        <div class="rating-filter">
+                            <div class="rating-stars" id="ratingFilter">
+                                <button class="star-btn" data-rating="1">⭐</button>
+                                <button class="star-btn" data-rating="2">⭐⭐</button>
+                                <button class="star-btn" data-rating="3">⭐⭐⭐</button>
+                                <button class="star-btn" data-rating="4">⭐⭐⭐⭐</button>
+                                <button class="star-btn" data-rating="5">⭐⭐⭐⭐⭐</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sort Filter -->
+                    <div class="filter-group">
+                        <h4>Ordenar Por</h4>
+                        <select class="filter-select" id="sortFilter">
+                            <option value="-promedioCalificacion">Mejor Calificados</option>
+                            <option value="-popularidad">Más Populares</option>
+                            <option value="-totalReseñas">Más Reseñados</option>
+                            <option value="nombre">Nombre (A-Z)</option>
+                            <option value="-nombre">Nombre (Z-A)</option>
+                        </select>
+                    </div>
+                </aside>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <!-- Results Header -->
+                    <div class="results-header">
+                        <div class="results-info">
+                            <h2 id="resultsTitle">Todos los Restaurantes</h2>
+                            <p id="resultsCount">Cargando...</p>
+                        </div>
+                        
+                        <div class="view-toggle">
+                            <button class="view-btn active" data-view="grid" id="gridView">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                            </button>
+                            <button class="view-btn" data-view="list" id="listView">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters -->
+                    <div class="active-filters" id="activeFilters" style="display: none;">
+                        <div class="filter-chips" id="filterChips"></div>
+                    </div>
+
+                    <!-- Restaurants Grid -->
+                    <div class="restaurants-grid" id="restaurantsGrid">
+                        <div class="loading-state">
+                            <div class="loader"></div>
+                            <p>Cargando restaurantes...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination" id="pagination" style="display: none;">
+                        <button class="pagination-btn" id="prevPage" disabled>
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            Anterior
+                        </button>
+                        
+                        <div class="pagination-pages" id="paginationPages"></div>
+                        
+                        <button class="pagination-btn" id="nextPage">
+                            Siguiente
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon"></div>
+        <div class="toast-content">
+            <div class="toast-title"></div>
+            <div class="toast-message"></div>
+        </div>
+        <button class="toast-close" onclick="hideToast()">×</button>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/restaurants.js"></script>
+</body>
+</html>
