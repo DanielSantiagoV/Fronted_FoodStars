@@ -210,4 +210,171 @@ function searchRestaurants() {
         showToast('Por favor ingresa un término de búsqueda', 'warning');
     }
 }
+/**
+ * Search by tag
+ * @param {string} tag - Tag to search
+ */
+function searchTag(tag) {
+    window.location.href = `restaurants.html?search=${encodeURIComponent(tag)}`;
+}
 
+/**
+ * Load statistics (mock data for now)
+ */
+async function loadStatistics() {
+    const statsRestaurants = document.getElementById('statsRestaurants');
+    const statsReviews = document.getElementById('statsReviews');
+    const statsUsers = document.getElementById('statsUsers');
+    
+    try {
+        // Try to get real stats from API if endpoint exists
+        // For now, use mock data with animation
+        animateNumber(statsRestaurants, 0, 1234, 2000);
+        animateNumber(statsReviews, 0, 15678, 2000);
+        animateNumber(statsUsers, 0, 8945, 2000);
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        // Keep default values
+    }
+}
+
+/**
+ * Animate number counting
+ * @param {HTMLElement} element - Element to animate
+ * @param {number} start - Start value
+ * @param {number} end - End value
+ * @param {number} duration - Animation duration in ms
+ */
+function animateNumber(element, start, end, duration) {
+    if (!element) return;
+    
+    const range = end - start;
+    const increment = range / (duration / 16); // 60fps
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= end) {
+            element.textContent = formatNumber(end) + '+';
+            clearInterval(timer);
+        } else {
+            element.textContent = formatNumber(Math.floor(current)) + '+';
+        }
+    }, 16);
+}
+
+/**
+ * Setup search input enter key handler
+ */
+function setupSearchHandler() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchRestaurants();
+            }
+        });
+    }
+}
+
+/**
+ * Load footer categories
+ */
+function loadFooterCategories() {
+    const footerCategories = document.getElementById('footerCategories');
+    if (!footerCategories || categories.length === 0) return;
+    
+    // Take first 4 categories
+    const topCategories = categories.slice(0, 4);
+    
+    footerCategories.innerHTML = topCategories.map(category => `
+        <li>
+            <a href="restaurants.html?category=${encodeURIComponent(category.nombre)}">
+                ${category.nombre}
+            </a>
+        </li>
+    `).join('');
+}
+
+/**
+ * Initialize page
+ */
+async function initPage() {
+    try {
+        // Load all data
+        await Promise.all([
+            loadCategories(),
+            loadRestaurants(),
+            loadStatistics()
+        ]);
+        
+        // Setup handlers
+        setupSearchHandler();
+        
+        // Load footer after categories are loaded
+        setTimeout(loadFooterCategories, 500);
+        
+    } catch (error) {
+        console.error('Error initializing page:', error);
+        showToast('Error al cargar la página', 'error');
+    }
+}
+
+/**
+ * Setup intersection observer for animations
+ */
+function setupScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all cards
+    document.querySelectorAll('.category-card, .restaurant-card, .feature-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.6s ease';
+        observer.observe(card);
+    });
+}
+
+/**
+ * Handle hero CTA buttons based on auth state
+ */
+function updateHeroCTA() {
+    if (isAuthenticated()) {
+        const heroAuthBtn = document.querySelector('.hero .btn-secondary');
+        if (heroAuthBtn) {
+            heroAuthBtn.textContent = 'Mi Perfil';
+            heroAuthBtn.href = '#profile';
+        }
+    }
+}
+
+// Initialize on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initPage();
+        setTimeout(setupScrollAnimations, 100);
+        updateHeroCTA();
+    });
+} else {
+    initPage();
+    setTimeout(setupScrollAnimations, 100);
+    updateHeroCTA();
+}
+
+// Export functions for global use
+window.searchRestaurants = searchRestaurants;
+window.searchTag = searchTag;
+window.loadCategories = loadCategories;
+window.loadRestaurants = loadRestaurants;
