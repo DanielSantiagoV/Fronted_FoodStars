@@ -71,3 +71,325 @@
         </nav>
     </header>
 
+    <!-- Admin Container -->
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <h2>Panel Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="sidebar-link active" data-section="dashboard">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#restaurants" class="sidebar-link" data-section="restaurants">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    Restaurantes
+                </a>
+                <a href="#categories" class="sidebar-link" data-section="categories">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    Categorías
+                </a>
+                <a href="#reviews" class="sidebar-link" data-section="reviews">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    Reseñas
+                </a>
+                <a href="#users" class="sidebar-link" data-section="users">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    Usuarios
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section class="admin-section active" id="dashboard">
+                <div class="section-header">
+                    <h1>Dashboard</h1>
+                    <p>Resumen general del sistema</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #FF6B35, #F7931E);">
+                            <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statRestaurants">0</div>
+                            <div class="stat-label">Restaurantes</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #004E89, #1A6FAD);">
+                            <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statReviews">0</div>
+                            <div class="stat-label">Reseñas</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                            <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statUsers">0</div>
+                            <div class="stat-label">Usuarios</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #FFC107, #FF9800);">
+                            <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statCategories">0</div>
+                            <div class="stat-label">Categorías</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="admin-card">
+                    <h2>Actividad Reciente</h2>
+                    <div class="activity-list" id="activityList">
+                        <div class="loading-state">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Restaurants Section -->
+            <section class="admin-section" id="restaurants">
+                <div class="section-header">
+                    <div>
+                        <h1>Gestión de Restaurantes</h1>
+                        <p>Administra todos los restaurantes</p>
+                    </div>
+                    <button class="btn-primary" onclick="showCreateRestaurantModal()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nuevo Restaurante
+                    </button>
+                </div>
+
+                <div class="admin-card">
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Ubicación</th>
+                                    <th>Rating</th>
+                                    <th>Reseñas</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="restaurantsTableBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="loading-state">
+                                            <div class="loader"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Categories Section -->
+            <section class="admin-section" id="categories">
+                <div class="section-header">
+                    <div>
+                        <h1>Gestión de Categorías</h1>
+                        <p>Administra las categorías de restaurantes</p>
+                    </div>
+                    <button class="btn-primary" onclick="showCreateCategoryModal()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nueva Categoría
+                    </button>
+                </div>
+
+                <div class="categories-grid" id="categoriesGrid">
+                    <div class="loading-state">
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reviews Section -->
+            <section class="admin-section" id="reviews">
+                <div class="section-header">
+                    <h1>Gestión de Reseñas</h1>
+                    <p>Modera las reseñas de usuarios</p>
+                </div>
+
+                <div class="admin-card">
+                    <div class="reviews-list" id="adminReviewsList">
+                        <div class="loading-state">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="admin-section" id="users">
+                <div class="section-header">
+                    <h1>Gestión de Usuarios</h1>
+                    <p>Administra usuarios del sistema</p>
+                </div>
+
+                <div class="admin-card">
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Reseñas</th>
+                                    <th>Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="loading-state">
+                                            <div class="loader"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create/Edit Restaurant Modal -->
+    <div class="modal" id="restaurantModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="restaurantModalTitle">Nuevo Restaurante</h2>
+                <button class="modal-close" onclick="closeRestaurantModal()">×</button>
+            </div>
+            <form id="restaurantForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="restaurantName">Nombre *</label>
+                        <input type="text" id="restaurantName" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="restaurantCategory">Categoría *</label>
+                        <select id="restaurantCategory" name="categoria" required>
+                            <option value="">Seleccionar...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="restaurantDescription">Descripción</label>
+                    <textarea id="restaurantDescription" name="descripcion" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="restaurantLocation">Ubicación</label>
+                    <input type="text" id="restaurantLocation" name="ubicacion">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" onclick="closeRestaurantModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Category Modal -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="categoryModalTitle">Nueva Categoría</h2>
+                <button class="modal-close" onclick="closeCategoryModal()">×</button>
+            </div>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Nombre *</label>
+                    <input type="text" id="categoryName" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="categoryDescription">Descripción</label>
+                    <textarea id="categoryDescription" name="descripcion" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" onclick="closeCategoryModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Confirmar Eliminación</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage">¿Estás seguro de que deseas eliminar este elemento?</p>
+            </div>
+            <div class="form-actions">
+                <button class="btn-outline" onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon"></div>
+        <div class="toast-content">
+            <div class="toast-title"></div>
+            <div class="toast-message"></div>
+        </div>
+        <button class="toast-close" onclick="hideToast()">×</button>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
