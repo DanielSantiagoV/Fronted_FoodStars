@@ -83,7 +83,26 @@ function displayCategories(categoriesToDisplay) {
  * @param {string} categoryName - Category name
  */
 function navigateToCategory(categoryName) {
-    window.location.href = `restaurants.html?category=${encodeURIComponent(categoryName)}`;
+    window.location.href = `./html/restaurants.html?category=${encodeURIComponent(categoryName)}`;
+}
+
+/**
+ * Get category name from restaurant (maps categoriaId to nombre)
+ */
+function getRestaurantCategoryName(restaurant) {
+    if (!restaurant) return null;
+    
+    // Si el restaurante tiene categoriaId, buscar el nombre en categories
+    if (restaurant.categoriaId && categories.length > 0) {
+        const category = categories.find(c => 
+            c._id === restaurant.categoriaId || 
+            c._id.toString() === restaurant.categoriaId.toString()
+        );
+        if (category) return category.nombre;
+    }
+    
+    // Fallback: usar categoria si está disponible
+    return restaurant.categoria || null;
 }
 
 /**
@@ -103,8 +122,9 @@ async function loadRestaurants() {
     
     try {
         const response = await api.getRestaurants({
-            limit: 6,
-            sort: '-promedioCalificacion' // Sort by rating descending
+            limite: 6,  // Backend usa 'limite' no 'limit'
+            ordenarPor: 'ranking',
+            orden: 'desc' // Sort by ranking descending
         });
         
         if (response.success && response.data) {
@@ -159,7 +179,8 @@ function createRestaurantCard(restaurant) {
     card.className = 'restaurant-card';
     card.onclick = () => navigateToRestaurant(restaurant._id);
     
-    const rating = restaurant.promedioCalificacion || 0;
+    // Backend retorna calificacionPromedio
+    const rating = restaurant.calificacionPromedio || restaurant.promedioCalificacion || 0;
     const reviewCount = restaurant.totalReseñas || 0;
     const stars = generateStars(rating);
     const isPopular = restaurant.popularidad > 70 || reviewCount > 20;
@@ -178,7 +199,7 @@ function createRestaurantCard(restaurant) {
             </div>
             <p>${truncateText(sanitizeHTML(restaurant.descripcion || 'Descubre este increíble restaurante'), 120)}</p>
             <div class="restaurant-meta">
-                <span class="category-tag">${restaurant.categoria || 'General'}</span>
+                <span class="category-tag">${getRestaurantCategoryName(restaurant) || 'General'}</span>
                 <span class="reviews-count">💬 ${formatNumber(reviewCount)} reseñas</span>
             </div>
         </div>
@@ -192,7 +213,7 @@ function createRestaurantCard(restaurant) {
  * @param {string} restaurantId - Restaurant ID
  */
 function navigateToRestaurant(restaurantId) {
-    window.location.href = `restaurant-detail.html?id=${restaurantId}`;
+    window.location.href = `./html/restaurant-detail.html?id=${restaurantId}`;
 }
 
 /**
@@ -205,7 +226,7 @@ function searchRestaurants() {
     const query = searchInput.value.trim();
     
     if (query) {
-        window.location.href = `restaurants.html?search=${encodeURIComponent(query)}`;
+        window.location.href = `./html/restaurants.html?search=${encodeURIComponent(query)}`;
     } else {
         showToast('Por favor ingresa un término de búsqueda', 'warning');
     }
@@ -215,7 +236,7 @@ function searchRestaurants() {
  * @param {string} tag - Tag to search
  */
 function searchTag(tag) {
-    window.location.href = `restaurants.html?search=${encodeURIComponent(tag)}`;
+    window.location.href = `./html/restaurants.html?search=${encodeURIComponent(tag)}`;
 }
 
 /**
@@ -289,7 +310,7 @@ function loadFooterCategories() {
     
     footerCategories.innerHTML = topCategories.map(category => `
         <li>
-            <a href="restaurants.html?category=${encodeURIComponent(category.nombre)}">
+            <a href="./html/restaurants.html?category=${encodeURIComponent(category.nombre)}">
                 ${category.nombre}
             </a>
         </li>
