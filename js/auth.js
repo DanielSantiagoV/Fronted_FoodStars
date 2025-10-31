@@ -63,7 +63,7 @@ function logout() {
     
     // Redirect to home after a short delay
     setTimeout(() => {
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
     }, 1000);
 }
 
@@ -163,7 +163,7 @@ function requireAdmin() {
     if (!isAdmin()) {
         showToast('No tienes permisos para acceder a esta página', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         }, 1500);
         return false;
     }
@@ -180,14 +180,22 @@ async function handleLogin(credentials) {
         const response = await api.login(credentials);
         
         if (response.success && response.data) {
+            // Backend retorna { usuario, token } - ajustar para compatibilidad
+            const user = response.data.usuario || response.data.user;
+            const token = response.data.token;
+            
+            if (!user || !token) {
+                throw new Error('Datos de autenticación incompletos');
+            }
+            
             // Save auth data
-            saveAuthData(response.data.token, response.data.user);
+            saveAuthData(token, user);
             
             showToast(CONFIG.MESSAGES.SUCCESS.LOGIN, 'success');
             
             // Check for redirect parameter
             const params = getQueryParams();
-            const redirectUrl = params.redirect || 'index.html';
+            const redirectUrl = params.redirect || '../index.html';
             
             // Redirect after short delay
             setTimeout(() => {
@@ -211,14 +219,22 @@ async function handleRegister(userData) {
         const response = await api.register(userData);
         
         if (response.success && response.data) {
+            // Backend retorna { usuario, token } - ajustar para compatibilidad
+            const user = response.data.usuario || response.data.user;
+            const token = response.data.token;
+            
+            if (!user || !token) {
+                throw new Error('Datos de registro incompletos');
+            }
+            
             // Save auth data
-            saveAuthData(response.data.token, response.data.user);
+            saveAuthData(token, user);
             
             showToast(CONFIG.MESSAGES.SUCCESS.REGISTER, 'success');
             
             // Redirect after short delay
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = '../index.html';
             }, 1000);
         } else {
             throw new Error(response.message || 'Error al registrarse');
@@ -268,7 +284,7 @@ async function validateToken() {
 async function autoLoginCheck() {
     if (isAuthenticated()) {
         const isValid = await validateToken();
-        if (!isValid && window.location.pathname !== '/auth.html') {
+        if (!isValid && window.location.pathname !== './auth.html') {
             showToast('Tu sesión ha expirado', 'warning');
         }
     }
