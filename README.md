@@ -1,7 +1,7 @@
 # ⭐ FoodStars - Frontend
 
 <div align="center">
-  <img src="./icon/foodstars.png" alt="FoodStars Logo" width="150" height="150">
+  <img src="https://media.tenor.com/fWD5SZjcqHwAAAAi/cooking-nasogg.gif" alt="FoodStars Logo" width="350" height="350">
 </div>
 
 > **Plataforma Gastronómica - Descubre, Califica y Comparte**  
@@ -548,7 +548,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 ### 📞 Soporte
 
 Si tienes preguntas o necesitas ayuda:
-- 📧 **Email**: [tu-email@example.com]
+- 📧 **Email**: [vinascodaniel9@gmail.com]
 - 🐛 **Issues**: Abre un issue en el repositorio
 - 💬 **Discusiones**: Participa en las discusiones del proyecto
 
