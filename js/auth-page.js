@@ -345,7 +345,17 @@ function checkExistingAuth() {
         showToast('Ya has iniciado sesión', 'info');
         setTimeout(() => {
             const params = getQueryParams();
-            const redirectUrl = params.redirect || 'index.html';
+            let redirectUrl = params.redirect;
+            
+            // If no redirect param, go to index.html
+            if (!redirectUrl) {
+                // Determine correct path based on current location
+                const currentPath = window.location.pathname;
+                redirectUrl = currentPath.includes('/html/') 
+                    ? '../index.html' 
+                    : 'index.html';
+            }
+            
             window.location.href = redirectUrl;
         }, 1500);
     }
