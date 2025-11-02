@@ -392,59 +392,109 @@
     opacity: 0.7;
 }
 
-/* Restaurants Grid */
+/* Restaurants Grid - CSS Grid Layout Dinámico */
 .restaurants-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2rem;
+    /* Grid dinámico que se adapta automáticamente al contenido y viewport */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    /* Altura automática para filas, permitiendo contenido variable */
+    grid-auto-rows: minmax(auto, max-content);
+    gap: 1.5rem;
     min-height: 400px;
+    /* Alineación automática para mejor distribución */
+    align-items: start;
+    /* Mejora el flujo de contenido */
+    grid-auto-flow: row dense;
 }
 
+/* Vista de lista - una sola columna */
 .restaurants-grid.list-view {
     grid-template-columns: 1fr;
+    grid-auto-rows: auto;
 }
 
+/* Tarjeta de restaurante - Diseño moderno y dinámico */
 .restaurant-card {
     background: white;
     border-radius: var(--radius-2xl);
     overflow: hidden;
-    box-shadow: var(--shadow);
-    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    /* Animación suave al cargar */
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
+/* Animación de entrada para tarjetas */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efecto hover mejorado */
 .restaurant-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-2xl);
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
 }
 
+/* Vista de lista - diseño horizontal */
 .list-view .restaurant-card {
     flex-direction: row;
+    max-height: 200px;
 }
 
+/* Imagen del restaurante - diseño dinámico */
 .restaurant-image {
     width: 100%;
-    height: 200px;
+    min-height: 220px;
+    height: auto;
+    aspect-ratio: 16 / 9;
     background: var(--gradient-primary);
+    background-size: cover;
+    background-position: center;
     position: relative;
     overflow: hidden;
+    /* Transición suave */
+    transition: transform 0.3s ease;
 }
 
-.list-view .restaurant-image {
-    width: 250px;
-    height: auto;
-}
-
-.restaurant-image::after {
+/* Si no hay imagen, mostrar placeholder */
+.restaurant-image:not([style*="background-image"])::after {
     content: '🍽️';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 4rem;
-    opacity: 0.3;
+    font-size: clamp(3rem, 5vw, 4.5rem);
+    opacity: 0.25;
+    transition: opacity 0.3s ease;
+}
+
+.restaurant-card:hover .restaurant-image {
+    transform: scale(1.05);
+}
+
+/* Vista de lista - imagen más pequeña */
+.list-view .restaurant-image {
+    width: 280px;
+    min-width: 280px;
+    height: 100%;
+    min-height: 200px;
+    aspect-ratio: auto;
+    flex-shrink: 0;
+}
+
+/* Placeholder solo se muestra si no hay imagen de fondo */
+.restaurant-card:hover .restaurant-image:not([style*="background-image"])::after {
+    opacity: 0.4;
 }
 
 .restaurant-badge {
@@ -461,27 +511,38 @@
     z-index: 1;
 }
 
+/* Contenido de la tarjeta - diseño flexible */
 .restaurant-content {
-    padding: 1.75rem;
+    padding: 1.5rem;
     flex: 1;
     display: flex;
     flex-direction: column;
+    /* Mejora la distribución del espacio */
+    gap: 0.75rem;
 }
 
+/* Header de la tarjeta */
 .restaurant-header {
     display: flex;
     justify-content: space-between;
-    align-items: start;
-    margin-bottom: 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .restaurant-card h3 {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
     color: var(--dark);
-    margin-bottom: 0.5rem;
+    margin: 0;
     line-height: 1.3;
+    font-weight: 700;
+    /* Permite que el título se ajuste */
+    flex: 1;
+    min-width: 0;
+    word-wrap: break-word;
 }
 
+/* Rating - diseño compacto */
 .rating {
     display: flex;
     align-items: center;
@@ -489,25 +550,41 @@
     font-weight: 700;
     color: var(--dark);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .stars {
     color: var(--accent);
     font-size: 1rem;
+    /* Animación sutil */
+    transition: transform 0.2s ease;
 }
 
+.restaurant-card:hover .stars {
+    transform: scale(1.1);
+}
+
+/* Descripción - texto flexible */
 .restaurant-card p {
     color: var(--gray-600);
-    line-height: 1.7;
-    margin-bottom: 1.25rem;
+    line-height: 1.6;
+    margin: 0;
     flex: 1;
+    /* Limita altura y permite scroll si es necesario */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+/* Metadata de la tarjeta */
 .restaurant-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 1.25rem;
+    padding-top: 1rem;
+    margin-top: auto;
     border-top: 2px solid var(--gray-200);
     gap: 1rem;
     flex-wrap: wrap;
@@ -640,6 +717,14 @@
     }
 }
 
+/* Responsive Design - Tablet */
+@media (max-width: 992px) {
+    .restaurants-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+        gap: 1.25rem;
+    }
+}
+
 @media (max-width: 768px) {
     .page-header {
         padding: 100px 0 2rem;
@@ -661,18 +746,30 @@
         min-width: auto;
     }
 
+    /* Grid dinámico para móvil - una o dos columnas según espacio */
     .restaurants-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: 1rem;
+    }
+
+    /* En pantallas muy pequeñas, una sola columna */
+    @media (max-width: 480px) {
+        .restaurants-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .list-view .restaurant-card {
         flex-direction: column;
+        max-height: none;
     }
 
     .list-view .restaurant-image {
         width: 100%;
+        min-width: 100%;
         height: 200px;
+        min-height: 200px;
+        aspect-ratio: 16 / 9;
     }
 
     .results-header {
