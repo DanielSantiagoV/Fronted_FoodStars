@@ -69,7 +69,7 @@ const CONFIG = {
     // User Roles
     ROLES: {
         USER: 'usuario',
-        ADMIN: 'administrador'
+        ADMIN: 'admin'  // Cambiado para coincidir con backend
     },
     
     // Status Messages
@@ -98,6 +98,11 @@ const CONFIG = {
         }
     }
 };
+
+// Make CONFIG globally accessible
+if (typeof window !== 'undefined') {
+    window.CONFIG = CONFIG;
+}
 
 // Export configuration
 if (typeof module !== 'undefined' && module.exports) {
