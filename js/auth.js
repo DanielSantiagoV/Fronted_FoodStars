@@ -33,7 +33,9 @@ function getCurrentUser() {
  */
 function isAdmin() {
     const user = getCurrentUser();
-    return user && user.role === CONFIG.ROLES.ADMIN;
+    // Verificar tanto 'role' como 'rol' para compatibilidad con backend
+    const userRole = user?.role || user?.rol;
+    return user && userRole === CONFIG.ROLES.ADMIN;
 }
 
 /**
@@ -42,8 +44,14 @@ function isAdmin() {
  * @param {object} user - User object
  */
 function saveAuthData(token, user) {
+    // Normalizar el campo de rol (backend puede usar 'rol', frontend espera 'role')
+    const normalizedUser = {
+        ...user,
+        role: user.role || user.rol || CONFIG.ROLES.USER,
+        rol: user.rol || user.role || CONFIG.ROLES.USER
+    };
     localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
-    localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(user));
+    localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(normalizedUser));
 }
 
 /**
@@ -61,9 +69,15 @@ function logout() {
     clearAuthData();
     showToast(CONFIG.MESSAGES.SUCCESS.LOGOUT, 'success');
     
+    // Determine correct path based on current location
+    const currentPath = window.location.pathname;
+    const redirectUrl = currentPath.includes('/html/') 
+        ? '../index.html' 
+        : 'index.html';
+    
     // Redirect to home after a short delay
     setTimeout(() => {
-        window.location.href = '../index.html';
+        window.location.href = redirectUrl;
     }, 1000);
 }
 
@@ -142,8 +156,14 @@ function requireAuth(redirectUrl = null) {
         const currentUrl = redirectUrl || window.location.pathname;
         showToast('Debes iniciar sesión para acceder a esta página', 'warning');
         
+        // Determine correct path to auth.html based on current location
+        const currentPath = window.location.pathname;
+        const authUrl = currentPath.includes('/html/') 
+            ? './auth.html' 
+            : 'html/auth.html';
+        
         setTimeout(() => {
-            window.location.href = `auth.html?redirect=${encodeURIComponent(currentUrl)}`;
+            window.location.href = `${authUrl}?redirect=${encodeURIComponent(currentUrl)}`;
         }, 1500);
         
         return false;
@@ -162,8 +182,15 @@ function requireAdmin() {
     
     if (!isAdmin()) {
         showToast('No tienes permisos para acceder a esta página', 'error');
+        
+        // Determine correct path based on current location
+        const currentPath = window.location.pathname;
+        const redirectUrl = currentPath.includes('/html/') 
+            ? '../index.html' 
+            : 'index.html';
+        
         setTimeout(() => {
-            window.location.href = '../index.html';
+            window.location.href = redirectUrl;
         }, 1500);
         return false;
     }
@@ -195,7 +222,18 @@ async function handleLogin(credentials) {
             
             // Check for redirect parameter
             const params = getQueryParams();
-            const redirectUrl = params.redirect || '../index.html';
+            let redirectUrl = params.redirect;
+            
+            // If no redirect param, go to index.html
+            if (!redirectUrl) {
+                // Determine correct path based on current location
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/html/')) {
+                    redirectUrl = '../index.html';
+                } else {
+                    redirectUrl = 'index.html';
+                }
+            }
             
             // Redirect after short delay
             setTimeout(() => {
@@ -232,9 +270,15 @@ async function handleRegister(userData) {
             
             showToast(CONFIG.MESSAGES.SUCCESS.REGISTER, 'success');
             
+            // Determine correct path based on current location
+            const currentPath = window.location.pathname;
+            const redirectUrl = currentPath.includes('/html/') 
+                ? '../index.html' 
+                : 'index.html';
+            
             // Redirect after short delay
             setTimeout(() => {
-                window.location.href = '../index.html';
+                window.location.href = redirectUrl;
             }, 1000);
         } else {
             throw new Error(response.message || 'Error al registrarse');
@@ -284,7 +328,7 @@ async function validateToken() {
 async function autoLoginCheck() {
     if (isAuthenticated()) {
         const isValid = await validateToken();
-        if (!isValid && window.location.pathname !== './auth.html') {
+        if (!isValid && window.location.pathname !== '/auth.html') {
             showToast('Tu sesión ha expirado', 'warning');
         }
     }
