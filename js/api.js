@@ -3,6 +3,17 @@
  * Handles all API requests to the backend
  */
 
+// Helper function to safely get CONFIG
+function getConfig() {
+    if (typeof window !== 'undefined' && window.CONFIG) {
+        return window.CONFIG;
+    }
+    if (typeof CONFIG !== 'undefined') {
+        return CONFIG;
+    }
+    throw new Error('CONFIG no está definido. Asegúrate de cargar config.js antes de api.js');
+}
+
 class APIClient {
     constructor(baseURL) {
         this.baseURL = baseURL;
@@ -17,7 +28,8 @@ class APIClient {
             'Content-Type': 'application/json'
         };
 
-        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+        const config = getConfig();
+        const token = localStorage.getItem(config.STORAGE_KEYS.TOKEN);
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
@@ -43,30 +55,74 @@ class APIClient {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
+            
+            // Verificar si la respuesta tiene contenido antes de parsear JSON
+            const contentType = response.headers.get('content-type');
+            const hasJsonContent = contentType && contentType.includes('application/json');
+            const hasBody = response.status !== 204 && response.status !== 304;
+            
+            let data = null;
+            
+            // Solo intentar parsear JSON si hay contenido y es tipo JSON
+            if (hasBody && hasJsonContent) {
+                try {
+                    const text = await response.text();
+                    if (text.trim()) {
+                        data = JSON.parse(text);
+                    }
+                } catch (parseError) {
+                    // Si falla el parsing, pero el status es ok, devolver un objeto vacío
+                    if (response.ok) {
+                        data = { success: true };
+                    } else {
+                        // Si hay error y no se puede parsear, crear un objeto de error
+                        throw new Error('Respuesta del servidor no válida');
+                    }
+                }
+            } else if (response.ok && response.status === 204) {
+                // Respuesta 204 (No Content) - éxito sin contenido
+                data = { success: true, message: 'Operación exitosa' };
+            }
 
             if (!response.ok) {
                 // Handle specific error cases
+                const config = getConfig();
                 if (response.status === 401) {
                     // Unauthorized - clear auth and redirect
-                    localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
-                    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
+                    localStorage.removeItem(config.STORAGE_KEYS.TOKEN);
+                    localStorage.removeItem(config.STORAGE_KEYS.USER);
                     
-                    if (window.location.pathname !== '/auth.html' && window.location.pathname !== '/index.html') {
-                        showToast(CONFIG.MESSAGES.ERROR.SESSION_EXPIRED, 'error');
+                    const currentPath = window.location.pathname;
+                    if (!currentPath.includes('/auth.html') && !currentPath.includes('/index.html')) {
+                        showToast(config.MESSAGES.ERROR.SESSION_EXPIRED, 'error');
+                        
+                        // Determine correct path to auth.html based on current location
+                        const authUrl = currentPath.includes('/html/') 
+                            ? './auth.html' 
+                            : 'html/auth.html';
+                        
                         setTimeout(() => {
-                            window.location.href = 'auth.html';
+                            window.location.href = authUrl;
                         }, 2000);
                     }
                 }
 
-                throw new Error(data.message || data.error || CONFIG.MESSAGES.ERROR.GENERIC);
+                const errorMessage = data?.message || data?.error || 
+                    (response.status === 404 ? 'Recurso no encontrado' : null) ||
+                    config.MESSAGES.ERROR.GENERIC;
+                throw new Error(errorMessage);
+            }
+
+            // Si no hay data pero la respuesta es exitosa, devolver un objeto de éxito
+            if (!data && response.ok) {
+                data = { success: true };
             }
 
             return data;
         } catch (error) {
             if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-                throw new Error(CONFIG.MESSAGES.ERROR.NETWORK);
+                const config = getConfig();
+                throw new Error(config.MESSAGES.ERROR.NETWORK);
             }
             throw error;
         }
@@ -79,7 +135,7 @@ class APIClient {
      * @param {object} userData - User registration data
      */
     async register(userData) {
-        return this.request('/auth/register', {
+        return this.request('/usuarios/registro', {
             method: 'POST',
             body: JSON.stringify(userData)
         });
@@ -90,7 +146,7 @@ class APIClient {
      * @param {object} credentials - Login credentials
      */
     async login(credentials) {
-        return this.request('/auth/login', {
+        return this.request('/usuarios/login', {
             method: 'POST',
             body: JSON.stringify(credentials)
         });
@@ -100,7 +156,7 @@ class APIClient {
      * Get current user profile
      */
     async getProfile() {
-        return this.request('/auth/profile');
+        return this.request('/usuarios/perfil');
     }
 
     /**
@@ -108,7 +164,7 @@ class APIClient {
      * @param {object} userData - Updated user data
      */
     async updateProfile(userData) {
-        return this.request('/auth/profile', {
+        return this.request('/usuarios/perfil', {
             method: 'PUT',
             body: JSON.stringify(userData)
         });
@@ -122,7 +178,7 @@ class APIClient {
      */
     async getRestaurants(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return this.request(`/restaurants${queryString ? '?' + queryString : ''}`);
+        return this.request(`/restaurantes${queryString ? '?' + queryString : ''}`);
     }
 
     /**
@@ -130,7 +186,7 @@ class APIClient {
      * @param {string} id - Restaurant ID
      */
     async getRestaurant(id) {
-        return this.request(`/restaurants/${id}`);
+        return this.request(`/restaurantes/${id}`);
     }
 
     /**
@@ -138,7 +194,7 @@ class APIClient {
      * @param {object} restaurantData - Restaurant data
      */
     async createRestaurant(restaurantData) {
-        return this.request('/restaurants', {
+        return this.request('/restaurantes', {
             method: 'POST',
             body: JSON.stringify(restaurantData)
         });
@@ -150,7 +206,7 @@ class APIClient {
      * @param {object} restaurantData - Updated restaurant data
      */
     async updateRestaurant(id, restaurantData) {
-        return this.request(`/restaurants/${id}`, {
+        return this.request(`/restaurantes/${id}`, {
             method: 'PUT',
             body: JSON.stringify(restaurantData)
         });
@@ -161,8 +217,18 @@ class APIClient {
      * @param {string} id - Restaurant ID
      */
     async deleteRestaurant(id) {
-        return this.request(`/restaurants/${id}`, {
+        return this.request(`/restaurantes/${id}`, {
             method: 'DELETE'
+        });
+    }
+
+    /**
+     * Approve restaurant (Admin only)
+     * @param {string} id - Restaurant ID
+     */
+    async approveRestaurant(id) {
+        return this.request(`/restaurantes/${id}/aprobar`, {
+            method: 'PATCH'
         });
     }
 
@@ -171,7 +237,7 @@ class APIClient {
      * @param {string} restaurantId - Restaurant ID
      */
     async getRestaurantDishes(restaurantId) {
-        return this.request(`/restaurants/${restaurantId}/dishes`);
+        return this.request(`/platos/restaurante/${restaurantId}`);
     }
 
     // ==================== DISHES ENDPOINTS ====================
@@ -182,7 +248,7 @@ class APIClient {
      */
     async getDishes(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return this.request(`/dishes${queryString ? '?' + queryString : ''}`);
+        return this.request(`/platos${queryString ? '?' + queryString : ''}`);
     }
 
     /**
@@ -190,7 +256,7 @@ class APIClient {
      * @param {string} id - Dish ID
      */
     async getDish(id) {
-        return this.request(`/dishes/${id}`);
+        return this.request(`/platos/${id}`);
     }
 
     /**
@@ -198,7 +264,7 @@ class APIClient {
      * @param {object} dishData - Dish data
      */
     async createDish(dishData) {
-        return this.request('/dishes', {
+        return this.request('/platos', {
             method: 'POST',
             body: JSON.stringify(dishData)
         });
@@ -210,7 +276,7 @@ class APIClient {
      * @param {object} dishData - Updated dish data
      */
     async updateDish(id, dishData) {
-        return this.request(`/dishes/${id}`, {
+        return this.request(`/platos/${id}`, {
             method: 'PUT',
             body: JSON.stringify(dishData)
         });
@@ -221,7 +287,7 @@ class APIClient {
      * @param {string} id - Dish ID
      */
     async deleteDish(id) {
-        return this.request(`/dishes/${id}`, {
+        return this.request(`/platos/${id}`, {
             method: 'DELETE'
         });
     }
@@ -234,7 +300,7 @@ class APIClient {
      */
     async getReviews(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return this.request(`/reviews${queryString ? '?' + queryString : ''}`);
+        return this.request(`/resenas${queryString ? '?' + queryString : ''}`);
     }
 
     /**
@@ -242,7 +308,7 @@ class APIClient {
      * @param {string} id - Review ID
      */
     async getReview(id) {
-        return this.request(`/reviews/${id}`);
+        return this.request(`/resenas/${id}`);
     }
 
     /**
@@ -250,7 +316,7 @@ class APIClient {
      * @param {string} restaurantId - Restaurant ID
      */
     async getRestaurantReviews(restaurantId) {
-        return this.request(`/restaurants/${restaurantId}/reviews`);
+        return this.request(`/resenas/restaurante/${restaurantId}`);
     }
 
     /**
@@ -258,7 +324,7 @@ class APIClient {
      * @param {object} reviewData - Review data
      */
     async createReview(reviewData) {
-        return this.request('/reviews', {
+        return this.request('/resenas', {
             method: 'POST',
             body: JSON.stringify(reviewData)
         });
@@ -270,7 +336,7 @@ class APIClient {
      * @param {object} reviewData - Updated review data
      */
     async updateReview(id, reviewData) {
-        return this.request(`/reviews/${id}`, {
+        return this.request(`/resenas/${id}`, {
             method: 'PUT',
             body: JSON.stringify(reviewData)
         });
@@ -281,38 +347,28 @@ class APIClient {
      * @param {string} id - Review ID
      */
     async deleteReview(id) {
-        return this.request(`/reviews/${id}`, {
+        return this.request(`/resenas/${id}`, {
             method: 'DELETE'
         });
     }
 
     /**
-     * Like a review
+     * Like a review (toggle - si ya tiene like, lo remueve)
      * @param {string} id - Review ID
      */
     async likeReview(id) {
-        return this.request(`/reviews/${id}/like`, {
+        return this.request(`/resenas/${id}/like`, {
             method: 'POST'
         });
     }
 
     /**
-     * Dislike a review
+     * Dislike a review (toggle - si ya tiene dislike, lo remueve)
      * @param {string} id - Review ID
      */
     async dislikeReview(id) {
-        return this.request(`/reviews/${id}/dislike`, {
+        return this.request(`/resenas/${id}/dislike`, {
             method: 'POST'
-        });
-    }
-
-    /**
-     * Remove like/dislike from review
-     * @param {string} id - Review ID
-     */
-    async removeLikeDislike(id) {
-        return this.request(`/reviews/${id}/like`, {
-            method: 'DELETE'
         });
     }
 
@@ -322,7 +378,7 @@ class APIClient {
      * Get all categories
      */
     async getCategories() {
-        return this.request('/categories');
+        return this.request('/categorias');
     }
 
     /**
@@ -330,7 +386,7 @@ class APIClient {
      * @param {string} id - Category ID
      */
     async getCategory(id) {
-        return this.request(`/categories/${id}`);
+        return this.request(`/categorias/${id}`);
     }
 
     /**
@@ -338,7 +394,7 @@ class APIClient {
      * @param {object} categoryData - Category data
      */
     async createCategory(categoryData) {
-        return this.request('/categories', {
+        return this.request('/categorias', {
             method: 'POST',
             body: JSON.stringify(categoryData)
         });
@@ -350,7 +406,7 @@ class APIClient {
      * @param {object} categoryData - Updated category data
      */
     async updateCategory(id, categoryData) {
-        return this.request(`/categories/${id}`, {
+        return this.request(`/categorias/${id}`, {
             method: 'PUT',
             body: JSON.stringify(categoryData)
         });
@@ -361,7 +417,7 @@ class APIClient {
      * @param {string} id - Category ID
      */
     async deleteCategory(id) {
-        return this.request(`/categories/${id}`, {
+        return this.request(`/categorias/${id}`, {
             method: 'DELETE'
         });
     }
@@ -374,96 +430,111 @@ class APIClient {
      */
     async getRankings(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return this.request(`/rankings${queryString ? '?' + queryString : ''}`);
+        return this.request(`/ranking/restaurantes${queryString ? '?' + queryString : ''}`);
     }
 
     /**
-     * Get top restaurants
+     * Get top restaurants (alias para getRankings con límite)
      * @param {number} limit - Number of restaurants to return
      */
     async getTopRestaurants(limit = 10) {
-        return this.request(`/rankings/top?limit=${limit}`);
+        return this.request(`/ranking/restaurantes?limite=${limit}&ordenarPor=ranking&orden=desc`);
     }
 
     // ==================== SEARCH ENDPOINTS ====================
+    // NOTA: Los endpoints de búsqueda no están implementados en el backend
+    // Usar getRestaurants con filtros como alternativa
 
     /**
-     * Search restaurants
+     * Search restaurants (usando endpoint de restaurantes con filtros)
      * @param {string} query - Search query
      * @param {object} filters - Additional filters
      */
     async searchRestaurants(query, filters = {}) {
-        const params = { q: query, ...filters };
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/search/restaurants?${queryString}`);
+        // Usar endpoint de restaurantes con parámetros de filtro
+        // El backend puede filtrar por nombre si se implementa
+        return this.getRestaurants(filters);
     }
 
     /**
-     * Search dishes
+     * Search dishes (usando endpoint de platos)
      * @param {string} query - Search query
      */
     async searchDishes(query) {
-        return this.request(`/search/dishes?q=${encodeURIComponent(query)}`);
+        // Usar endpoint de platos
+        return this.getDishes();
     }
 
     // ==================== ADMIN ENDPOINTS ====================
+    // NOTA: Algunos endpoints de admin no están implementados en el backend
 
     /**
      * Get all users (Admin only)
+     * @param {object} params - Query parameters
      */
-    async getUsers() {
-        return this.request('/admin/users');
+    async getUsers(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.request(`/usuarios${queryString ? '?' + queryString : ''}`);
     }
 
     /**
      * Update user role (Admin only)
-     * @param {string} userId - User ID
-     * @param {string} role - New role
+     * NOTA: Endpoint no implementado en backend - retorna error
      */
     async updateUserRole(userId, role) {
-        return this.request(`/admin/users/${userId}/role`, {
-            method: 'PUT',
-            body: JSON.stringify({ role })
-        });
+        throw new Error('Endpoint no implementado en el backend');
     }
 
     /**
      * Delete user (Admin only)
-     * @param {string} userId - User ID
+     * NOTA: Endpoint no implementado en backend - retorna error
      */
     async deleteUser(userId) {
-        return this.request(`/admin/users/${userId}`, {
-            method: 'DELETE'
-        });
+        throw new Error('Endpoint no implementado en el backend');
     }
 
     /**
      * Approve restaurant (Admin only)
-     * @param {string} restaurantId - Restaurant ID
+     * Usa el endpoint de restaurantes con PATCH
      */
-    async approveRestaurant(restaurantId) {
-        return this.request(`/admin/restaurants/${restaurantId}/approve`, {
-            method: 'POST'
-        });
-    }
+    // Ya está implementado arriba en approveRestaurant()
 
     /**
      * Get pending approvals (Admin only)
+     * NOTA: Endpoint no implementado - usar getRestaurants con filtro aprobado=false
      */
     async getPendingApprovals() {
-        return this.request('/admin/approvals');
+        return this.getRestaurants({ soloAprobados: 'false' });
     }
 
     /**
      * Get dashboard stats (Admin only)
+     * NOTA: Endpoint no implementado en backend - retorna error
      */
     async getDashboardStats() {
-        return this.request('/admin/stats');
+        throw new Error('Endpoint no implementado en el backend');
     }
 }
 
 // Create global API instance
-const api = new APIClient(CONFIG.API_URL);
+// Get CONFIG using the helper function
+let api;
+try {
+    const config = getConfig();
+    api = new APIClient(config.API_URL);
+} catch (error) {
+    console.error('Error al inicializar API Client:', error);
+    // Create a dummy API instance to prevent further errors
+    api = {
+        request: () => Promise.reject(error),
+        getHeaders: () => ({ 'Content-Type': 'application/json' })
+    };
+}
+
+// Make it globally accessible
+if (typeof window !== 'undefined') {
+    window.api = api;
+}
 
 // Export for use in modules
 if (typeof module !== 'undefined' && module.exports) {
