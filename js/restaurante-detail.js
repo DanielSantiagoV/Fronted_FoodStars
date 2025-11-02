@@ -11,6 +11,7 @@ let userReview = null;
 let currentEditReviewId = null;
 let reviewsPage = 1;
 let hasMoreReviews = false;
+let categories = [];  // Para mapear categoriaId a nombre
 
 /**
  * Initialize page
@@ -24,6 +25,16 @@ async function initPage() {
         showToast('ID de restaurante no válido', 'error');
         setTimeout(() => window.location.href = 'restaurants.html', 2000);
         return;
+    }
+    
+    // Load categories first to map IDs to names
+    try {
+        const categoriesRes = await api.getCategories();
+        if (categoriesRes.success && categoriesRes.data) {
+            categories = categoriesRes.data;
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
     }
     
     // Load data
@@ -107,7 +118,14 @@ async function loadRestaurant() {
             displayRestaurantInfo(restaurant);
             displayRatingBreakdown(restaurant);
             displayLocation(restaurant);
-            loadSimilarRestaurants(restaurant.categoria);
+            // Cargar restaurantes similares por categoría
+            if (restaurant.categoriaId) {
+                // Si tenemos categoriaId, buscar el nombre de la categoría para filtrar
+                // Por ahora usar categoriaId directamente
+                loadSimilarRestaurants(null, restaurant.categoriaId);
+            } else if (restaurant.categoria) {
+                loadSimilarRestaurants(restaurant.categoria);
+            }
         } else {
             throw new Error('Restaurante no encontrado');
         }
@@ -123,9 +141,20 @@ async function loadRestaurant() {
  */
 function displayRestaurantHero(rest) {
     const hero = document.getElementById('restaurantHero');
-    const rating = rest.promedioCalificacion || 0;
+    // Backend retorna calificacionPromedio
+    const rating = rest.calificacionPromedio || rest.promedioCalificacion || 0;
     const stars = generateStars(rating);
     const reviewCount = rest.totalReseñas || 0;
+    
+    // Determinar si hay imagen (Base64 o URL)
+    const hasImage = rest.imagen && (rest.imagen.startsWith('data:image') || rest.imagen.startsWith('http'));
+    if (hasImage) {
+        hero.style.backgroundImage = `url('${rest.imagen}')`;
+        hero.style.backgroundSize = 'cover';
+        hero.style.backgroundPosition = 'center';
+    } else {
+        hero.style.backgroundImage = '';
+    }
     
     hero.innerHTML = `
         <div class="hero-content">
@@ -152,7 +181,7 @@ function displayRestaurantHero(rest) {
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                         </svg>
-                        <span>${rest.categoria || 'General'}</span>
+                        <span>${getCategoryName(rest) || 'General'}</span>
                     </div>
                     <div class="hero-meta-item">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +208,7 @@ function displayRestaurantInfo(rest) {
     infoCard.innerHTML = `
         <p class="restaurant-description">${sanitizeHTML(rest.descripcion || 'Sin descripción disponible.')}</p>
         <div class="info-tags">
-            <span class="info-tag">${getCategoryIcon(rest.categoria)} ${rest.categoria || 'General'}</span>
+            <span class="info-tag">${getCategoryIcon(getCategoryName(rest))} ${getCategoryName(rest) || 'General'}</span>
             ${rest.popularidad > 70 ? '<span class="info-tag">⭐ Popular</span>' : ''}
         </div>
     `;
@@ -211,14 +240,23 @@ async function loadDishes() {
 function displayDishes(dishes) {
     const grid = document.getElementById('dishesGrid');
     
-    grid.innerHTML = dishes.map(dish => `
+    grid.innerHTML = dishes.map(dish => {
+        // Determinar si hay imagen (Base64 o URL)
+        const hasImage = dish.imagen && (dish.imagen.startsWith('data:image') || dish.imagen.startsWith('http'));
+        const imageSrc = hasImage ? dish.imagen : '';
+        
+        return `
         <div class="dish-card">
-            <span class="dish-icon">🍽️</span>
+            ${imageSrc 
+                ? `<div class="dish-image" style="background-image: url('${imageSrc}'); background-size: cover; background-position: center; width: 100%; height: 200px; border-radius: 12px; margin-bottom: 1rem;"></div>`
+                : `<span class="dish-icon">🍽️</span>`
+            }
             <h4>${sanitizeHTML(dish.nombre)}</h4>
             <p>${truncateText(sanitizeHTML(dish.descripcion || ''), 80)}</p>
             ${dish.precio ? `<div class="dish-price">$${formatNumber(dish.precio)}</div>` : ''}
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 /**
@@ -226,22 +264,39 @@ function displayDishes(dishes) {
  */
 async function loadReviews() {
     const list = document.getElementById('reviewsList');
+    if (!list) {
+        console.error('Elemento reviewsList no encontrado');
+        return;
+    }
+    
     list.innerHTML = '<div class="loading-state"><div class="loader"></div></div>';
     
     try {
         const response = await api.getRestaurantReviews(restaurantId);
         
-        if (response.success && response.data) {
-            reviews = response.data;
+        if (response.success) {
+            // response.data puede ser un array vacío o null
+            reviews = Array.isArray(response.data) ? response.data : [];
             displayReviews(reviews);
             checkUserReview();
-            updateLoadMoreButton(response.pagination);
+            // Actualizar botón de cargar más si hay información de paginación
+            if (response.pagination) {
+                updateLoadMoreButton(response.pagination);
+            } else {
+                updateLoadMoreButton(null);
+            }
         } else {
-            list.innerHTML = '<p style="color: var(--gray-600); text-align: center;">No hay reseñas aún</p>';
+            throw new Error(response.message || 'Error al cargar reseñas');
         }
     } catch (error) {
         console.error('Error loading reviews:', error);
-        list.innerHTML = '<p style="color: var(--danger); text-align: center;">Error al cargar reseñas</p>';
+        list.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                <p style="margin-bottom: 1rem;">Error al cargar reseñas</p>
+                <p style="font-size: 0.9rem; color: var(--gray-600);">${error.message || 'Por favor intenta nuevamente'}</p>
+                <button class="btn-outline" onclick="loadReviews()" style="margin-top: 1rem;">Reintentar</button>
+            </div>
+        `;
     }
 }
 
@@ -440,7 +495,7 @@ async function handleReviewSubmit(e) {
     
     try {
         const response = await api.createReview({
-            restaurante: restaurantId,
+            restauranteId: restaurantId,  // Backend espera restauranteId
             calificacion: parseInt(rating),
             comentario: comment
         });
@@ -697,16 +752,40 @@ function displayLocation(rest) {
 }
 
 /**
+ * Get category name from restaurant object (by categoriaId or categoria)
+ */
+function getCategoryName(restaurant) {
+    if (!restaurant) return null;
+    
+    // Si tiene categoriaId, buscar el nombre en las categorías cargadas
+    if (restaurant.categoriaId) {
+        const category = categories.find(c => 
+            c._id === restaurant.categoriaId || 
+            c._id.toString() === restaurant.categoriaId.toString()
+        );
+        if (category) return category.nombre;
+    }
+    
+    // Fallback: usar categoria si está disponible
+    return restaurant.categoria || null;
+}
+
+/**
  * Load similar restaurants
  */
-async function loadSimilarRestaurants(category) {
+async function loadSimilarRestaurants(category, categoriaId = null) {
     const container = document.getElementById('similarList');
     
     try {
-        const response = await api.getRestaurants({
-            categoria: category,
-            limit: 3
-        });
+        const params = { limite: 3 };
+        if (categoriaId) {
+            params.categoriaId = categoriaId;
+        } else if (category) {
+            // Si solo tenemos el nombre, intentar buscar la categoría
+            params.categoria = category;
+        }
+        
+        const response = await api.getRestaurants(params);
         
         if (response.success && response.data && response.data.length > 0) {
             const filtered = response.data.filter(r => r._id !== restaurantId).slice(0, 3);
@@ -731,7 +810,7 @@ function displaySimilarRestaurants(restaurants) {
             <div class="similar-icon">🍽️</div>
             <div class="similar-info">
                 <h4>${sanitizeHTML(rest.nombre)}</h4>
-                <p>⭐ ${(rest.promedioCalificacion || 0).toFixed(1)} • ${rest.totalReseñas || 0} reseñas</p>
+                <p>⭐ ${(rest.calificacionPromedio || rest.promedioCalificacion || 0).toFixed(1)} • ${rest.totalReseñas || 0} reseñas</p>
             </div>
         </div>
     `).join('');
@@ -807,3 +886,4 @@ window.closeEditModal = closeEditModal;
 window.closeDeleteModal = closeDeleteModal;
 window.handleLike = handleLike;
 window.handleDislike = handleDislike;
+window.loadReviews = loadReviews;

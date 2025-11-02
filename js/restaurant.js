@@ -11,7 +11,8 @@ let filters = {
     search: '',
     category: '',
     rating: 0,
-    sort: '-promedioCalificacion'
+    ordenarPor: 'ranking',
+    orden: 'desc'
 };
 let categories = [];
 let restaurants = [];
@@ -53,13 +54,26 @@ function parseURLParameters() {
         filters.rating = parseInt(params.rating);
     }
     
-    if (params.sort) {
-        filters.sort = params.sort;
+    // Backend usa ordenarPor y orden
+    if (params.ordenarPor) {
+        filters.ordenarPor = params.ordenarPor;
+        filters.orden = params.orden || 'desc';
+        document.getElementById('sortFilter').value = `${params.ordenarPor}-${params.orden || 'desc'}`;
+    } else if (params.sort) {
+        // Compatibilidad con formato anterior
+        const parts = params.sort.split('-');
+        if (parts.length === 2) {
+            filters.ordenarPor = parts[0];
+            filters.orden = parts[1];
+        }
         document.getElementById('sortFilter').value = params.sort;
     }
     
     if (params.page) {
         currentPage = parseInt(params.page);
+    } else if (params.saltar !== undefined) {
+        // Calcular página desde saltar si se proporciona
+        currentPage = Math.floor(params.saltar / CONFIG.PAGINATION.DEFAULT_LIMIT) + 1;
     }
 }
 
@@ -96,7 +110,17 @@ function setupEventListeners() {
     // Sort filter
     const sortFilter = document.getElementById('sortFilter');
     sortFilter.addEventListener('change', (e) => {
-        filters.sort = e.target.value;
+        // Parsear valor del formato "ordenarPor-orden"
+        const value = e.target.value;
+        if (value.includes('-')) {
+            const [ordenarPor, orden] = value.split('-');
+            filters.ordenarPor = ordenarPor;
+            filters.orden = orden;
+        } else {
+            // Fallback para formato anterior
+            filters.ordenarPor = 'ranking';
+            filters.orden = 'desc';
+        }
         currentPage = 1;
         updateURLAndReload();
     });
@@ -240,11 +264,12 @@ function resetFilters() {
         search: '',
         category: '',
         rating: 0,
-        sort: '-promedioCalificacion'
+        ordenarPor: 'ranking',
+        orden: 'desc'
     };
     
     document.getElementById('searchInput').value = '';
-    document.getElementById('sortFilter').value = '-promedioCalificacion';
+    document.getElementById('sortFilter').value = 'ranking-desc';
     document.querySelectorAll('#categoryFilters input[type="checkbox"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('.star-btn').forEach(btn => btn.classList.remove('active'));
     
@@ -260,10 +285,12 @@ function updateURLAndReload() {
     const params = {};
     
     if (filters.search) params.search = filters.search;
-    if (filters.category) params.category = filters.category;
-    if (filters.rating) params.rating = filters.rating;
-    if (filters.sort !== '-promedioCalificacion') params.sort = filters.sort;
-    if (currentPage > 1) params.page = currentPage;
+    // category se maneja arriba con categoriaId
+    if (filters.rating) params.minRating = filters.rating;
+    // Backend usa ordenarPor y orden en lugar de sort
+    if (filters.ordenarPor) params.ordenarPor = filters.ordenarPor;
+    if (filters.orden) params.orden = filters.orden;
+    if (currentPage > 1) params.pagina = currentPage; // Usar 'pagina' o 'saltar' según el backend
     
     updateQueryParams(params);
     loadRestaurants();
@@ -374,13 +401,25 @@ async function loadRestaurants() {
     
     try {
         const params = {
-            page: currentPage,
-            limit: CONFIG.PAGINATION.DEFAULT_LIMIT,
-            sort: filters.sort
+            saltar: (currentPage - 1) * CONFIG.PAGINATION.DEFAULT_LIMIT,  // Backend usa 'saltar' para paginación
+            limite: CONFIG.PAGINATION.DEFAULT_LIMIT,  // Backend usa 'limite' no 'limit'
+            ordenarPor: filters.ordenarPor || 'ranking',
+            orden: filters.orden || 'desc'
         };
         
         if (filters.search) params.search = filters.search;
-        if (filters.category) params.categoria = filters.category;
+        // El backend filtra por categoriaId, pero podemos filtrar por nombre si el backend lo soporta
+        // Por ahora enviar categoriaId si tenemos la categoría seleccionada
+        if (filters.category) {
+            // Buscar el ID de la categoría
+            const category = categories.find(c => c.nombre === filters.category);
+            if (category && category._id) {
+                params.categoriaId = category._id;
+            } else {
+                // Fallback: usar el nombre si no tenemos el ID
+                params.categoria = filters.category;
+            }
+        }
         if (filters.rating) params.minRating = filters.rating;
         
         const response = await api.getRestaurants(params);
@@ -445,13 +484,19 @@ function createRestaurantCard(restaurant) {
     card.className = 'restaurant-card';
     card.onclick = () => navigateToRestaurant(restaurant._id);
     
-    const rating = restaurant.promedioCalificacion || 0;
+    // Backend retorna calificacionPromedio
+    const rating = restaurant.calificacionPromedio || restaurant.promedioCalificacion || 0;
     const reviewCount = restaurant.totalReseñas || 0;
     const stars = generateStars(rating);
     const isPopular = restaurant.popularidad > 70 || reviewCount > 20;
     
+    // Determinar si hay imagen (Base64 o URL)
+    const hasImage = restaurant.imagen && (restaurant.imagen.startsWith('data:image') || restaurant.imagen.startsWith('http'));
+    const imageSrc = hasImage ? restaurant.imagen : '';
+    
     card.innerHTML = `
-        <div class="restaurant-image">
+        <div class="restaurant-image" ${imageSrc ? `style="background-image: url('${imageSrc}'); background-size: cover; background-position: center;"` : ''}>
+            ${!imageSrc ? '' : ''}
             ${isPopular ? '<span class="restaurant-badge">⭐ Popular</span>' : ''}
         </div>
         <div class="restaurant-content">
@@ -464,7 +509,7 @@ function createRestaurantCard(restaurant) {
             </div>
             <p>${truncateText(sanitizeHTML(restaurant.descripcion || 'Descubre este increíble restaurante'), 120)}</p>
             <div class="restaurant-meta">
-                <span class="category-tag">${restaurant.categoria || 'General'}</span>
+                <span class="category-tag">${getRestaurantCategoryName(restaurant) || 'General'}</span>
                 <span class="reviews-count">💬 ${formatNumber(reviewCount)} reseñas</span>
             </div>
         </div>
@@ -584,6 +629,25 @@ if (document.readyState === 'loading') {
 } else {
     initPage();
     setupRatingFilter();
+}
+
+/**
+ * Get category name from restaurant (maps categoriaId to nombre)
+ */
+function getRestaurantCategoryName(restaurant) {
+    if (!restaurant) return null;
+    
+    // Si el restaurante tiene categoriaId, buscar el nombre en categories
+    if (restaurant.categoriaId && categories.length > 0) {
+        const category = categories.find(c => 
+            c._id === restaurant.categoriaId || 
+            c._id.toString() === restaurant.categoriaId.toString()
+        );
+        if (category) return category.nombre;
+    }
+    
+    // Fallback: usar categoria si está disponible
+    return restaurant.categoria || null;
 }
 
 // Export functions for global use

@@ -431,6 +431,146 @@ function initHeaderScroll() {
     });
 }
 
+/**
+ * Convierte un archivo de imagen a Base64
+ * @param {File} file - Archivo de imagen
+ * @param {number} maxSizeMB - Tamaño máximo en MB (default: 2)
+ * @returns {Promise<string>} - String Base64 de la imagen
+ */
+async function convertImageToBase64(file, maxSizeMB = 2) {
+    return new Promise((resolve, reject) => {
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image/')) {
+            reject(new Error('El archivo debe ser una imagen'));
+            return;
+        }
+        
+        // Validar tamaño (maxSizeMB en MB)
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            reject(new Error(`La imagen es demasiado grande. Tamaño máximo: ${maxSizeMB}MB`));
+            return;
+        }
+        
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            resolve(e.target.result);
+        };
+        
+        reader.onerror = () => {
+            reject(new Error('Error al leer el archivo'));
+        };
+        
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Maneja la carga de una imagen y la convierte a Base64
+ * @param {Event} event - Evento del input file
+ * @param {string} previewId - ID del elemento donde mostrar la preview
+ * @param {string} inputId - ID del input file
+ */
+async function handleImageUpload(event, previewId, inputId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const previewElement = document.getElementById(previewId);
+    const previewContainer = previewElement?.parentElement;
+    const removeBtn = document.getElementById(inputId + 'Remove') || previewContainer?.querySelector('.image-remove-btn');
+    const base64Input = document.getElementById(inputId + 'Base64');
+    
+    if (!previewElement || !previewContainer) {
+        console.error('Elementos de preview no encontrados');
+        return;
+    }
+    
+    try {
+        // Mostrar loading
+        previewElement.innerHTML = '<div class="loader"></div><p>Procesando imagen...</p>';
+        
+        // Convertir a Base64
+        const base64String = await convertImageToBase64(file, 2);
+        
+        // Guardar Base64 en input hidden
+        if (base64Input) {
+            base64Input.value = base64String;
+        }
+        
+        // Mostrar preview
+        previewElement.innerHTML = `<img src="${base64String}" alt="Preview">`;
+        previewElement.style.padding = '0';
+        
+        // Mostrar botón de eliminar
+        if (removeBtn) {
+            removeBtn.style.display = 'flex';
+        }
+        
+        // Permitir click en preview para cambiar imagen
+        previewElement.style.cursor = 'pointer';
+        previewElement.onclick = () => document.getElementById(inputId).click();
+        
+    } catch (error) {
+        console.error('Error al procesar imagen:', error);
+        showToast(error.message || 'Error al procesar la imagen', 'error');
+        
+        // Restaurar placeholder
+        previewElement.innerHTML = `
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p>Haz clic para subir una imagen</p>
+            <p class="image-hint">Formatos: JPG, PNG, WEBP (máx. 2MB)</p>
+        `;
+        previewElement.style.padding = '2rem';
+        
+        // Limpiar input
+        event.target.value = '';
+        if (base64Input) {
+            base64Input.value = '';
+        }
+    }
+}
+
+/**
+ * Elimina la imagen seleccionada
+ * @param {string} inputId - ID del input file
+ * @param {string} previewId - ID del elemento de preview
+ */
+function removeImage(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const previewElement = document.getElementById(previewId);
+    const previewContainer = previewElement?.parentElement;
+    const removeBtn = document.getElementById(inputId + 'Remove') || previewContainer?.querySelector('.image-remove-btn');
+    const base64Input = document.getElementById(inputId + 'Base64');
+    
+    if (input) input.value = '';
+    if (base64Input) base64Input.value = '';
+    
+    if (previewElement) {
+        previewElement.innerHTML = `
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p>Haz clic para subir una imagen</p>
+            <p class="image-hint">Formatos: JPG, PNG, WEBP (máx. 2MB)</p>
+        `;
+        previewElement.style.padding = '2rem';
+        previewElement.style.cursor = 'pointer';
+        previewElement.onclick = () => document.getElementById(inputId).click();
+    }
+    
+    if (removeBtn) {
+        removeBtn.style.display = 'none';
+    }
+}
+
+// Exportar funciones globalmente
+window.handleImageUpload = handleImageUpload;
+window.removeImage = removeImage;
+window.convertImageToBase64 = convertImageToBase64;
+
 // Initialize on DOM load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
