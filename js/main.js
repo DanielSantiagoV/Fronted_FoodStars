@@ -185,8 +185,13 @@ function createRestaurantCard(restaurant) {
     const stars = generateStars(rating);
     const isPopular = restaurant.popularidad > 70 || reviewCount > 20;
     
+    // Determinar si hay imagen (Base64 o URL)
+    const hasImage = restaurant.imagen && (restaurant.imagen.startsWith('data:image') || restaurant.imagen.startsWith('http'));
+    const imageSrc = hasImage ? restaurant.imagen : '';
+    
     card.innerHTML = `
-        <div class="restaurant-image">
+        <div class="restaurant-image" ${imageSrc ? `style="background-image: url('${imageSrc}'); background-size: cover; background-position: center;"` : ''}>
+            ${!imageSrc ? '' : ''}
             ${isPopular ? '<span class="restaurant-badge">⭐ Popular</span>' : ''}
         </div>
         <div class="restaurant-content">
@@ -226,7 +231,7 @@ function searchRestaurants() {
     const query = searchInput.value.trim();
     
     if (query) {
-        window.location.href = `./html/restaurants.html?search=${encodeURIComponent(query)}`;
+        window.location.href = `restaurants.html?search=${encodeURIComponent(query)}`;
     } else {
         showToast('Por favor ingresa un término de búsqueda', 'warning');
     }
@@ -310,7 +315,7 @@ function loadFooterCategories() {
     
     footerCategories.innerHTML = topCategories.map(category => `
         <li>
-            <a href="./html/restaurants.html?category=${encodeURIComponent(category.nombre)}">
+            <a href="restaurants.html?category=${encodeURIComponent(category.nombre)}">
                 ${category.nombre}
             </a>
         </li>
