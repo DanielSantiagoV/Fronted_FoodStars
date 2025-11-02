@@ -162,3 +162,84 @@ La aplicación está completamente optimizada para:
 - La autenticación se maneja mediante tokens JWT almacenados en localStorage
 - Todas las peticiones API incluyen manejo de errores y estados de carga
 - El diseño sigue principios de diseño moderno y accesibilidad web
+
+
+## 🛠️ Tecnologías Utilizadas
+
+### Frontend Core
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+### Características Técnicas
+- **CSS Vanilla**: Estilos personalizados con variables CSS y diseño modular
+- **JavaScript ES6+**: Código moderno sin frameworks (Vanilla JS)
+- **Fetch API**: Comunicación asíncrona con el backend REST
+- **LocalStorage**: Almacenamiento de tokens y datos de sesión
+- **Responsive Design**: Media queries y diseño mobile-first
+
+### Recursos y Herramientas
+- **Iconos SVG**: Iconos vectoriales inline para mejor rendimiento
+- **Emojis**: Uso de emojis nativos para iconos temáticos
+- **CSS Variables**: Sistema de diseño con variables personalizables
+- **Animaciones CSS**: Transiciones y animaciones fluidas nativas
+
+### Backend (Requerido)
+El frontend requiere un backend REST API con los siguientes endpoints:
+- Autenticación (login, registro, logout)
+- Restaurantes (CRUD)
+- Platos/Menú (CRUD)
+- Categorías (CRUD)
+- Reseñas (CRUD)
+- Usuarios (gestión)
+
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
+- Navegador web moderno (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- Servidor backend REST API corriendo (por defecto: `http://localhost:3000`)
+- Editor de código (recomendado: VS Code con extensión Live Server)
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone <repository-url>
+   cd Fronted_FoodStars
+   ```
+
+2. **Configurar la URL del Backend**
+   - Abrir el archivo `js/config.js`
+   - Actualizar `API_URL` con la URL de tu backend:
+     ```javascript
+     API_URL: 'http://localhost:3000/api/v1'
+     ```
+
+3. **Abrir la aplicación**
+   
+   **Opción 1: Servidor HTTP simple (Python)**
+   ```bash
+   python -m http.server 8000
+   # Luego abrir: http://localhost:8000
+   ```
+   
+   **Opción 2: Servidor HTTP simple (Node.js)**
+   ```bash
+   npx http-server -p 8000
+   # Luego abrir: http://localhost:8000
+   ```
+   
+   **Opción 3: Live Server (VS Code - Recomendado)**
+   - Instalar extensión "Live Server" en VS Code
+   - Clic derecho en `index.html` → "Open with Live Server"
+
+4. **Verificar la conexión**
+   - Abrir la consola del navegador (F12)
+   - Verificar que no hay errores de conexión con la API
+   - El backend debe estar corriendo en el puerto configurado
+
+### Configuración Adicional
+
+- **Cambiar el puerto del backend**: Editar `API_URL` en `js/config.js`
+- **Configurar timeout de requests**: Modificar `API_TIMEOUT` en `js/config.js`
+- **Personalizar paginación**: Ajustar `PAGINATION` en `js/config.js`
