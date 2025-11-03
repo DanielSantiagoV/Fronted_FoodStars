@@ -474,7 +474,16 @@ class APIClient {
      */
     async getUsers(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return this.request(`/usuarios${queryString ? '?' + queryString : ''}`);
+        // Intentar primero con /admin/usuarios, si falla, usar /usuarios como fallback
+        try {
+            return await this.request(`/admin/usuarios${queryString ? '?' + queryString : ''}`);
+        } catch (error) {
+            // Si el endpoint /admin/usuarios no existe, intentar con /usuarios
+            if (error.message.includes('404') || error.message.includes('no encontrado')) {
+                return this.request(`/usuarios${queryString ? '?' + queryString : ''}`);
+            }
+            throw error;
+        }
     }
 
     /**

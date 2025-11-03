@@ -513,24 +513,43 @@ async function loadUsersData() {
         // El backend limita 'limite' a máximo 100
         const response = await api.getUsers({ limite: 100 });
         
-        if (response.success && response.data) {
+        if (response && response.success && response.data) {
             users = Array.isArray(response.data) ? response.data : [];
             displayUsersTable(users);
+        } else if (response && !response.success) {
+            // El backend devolvió un error
+            const errorMsg = response.message || response.error || 'Error al cargar usuarios';
+            throw new Error(errorMsg);
         } else {
-            throw new Error(response.message || 'Error al cargar usuarios');
+            // Respuesta inesperada
+            throw new Error('Formato de respuesta inesperado del servidor');
         }
     } catch (error) {
         console.error('Error loading users:', error);
+        
+        // Determinar el mensaje de error más descriptivo
+        let errorMessage = 'Error desconocido';
+        if (error.message) {
+            errorMessage = error.message;
+        } else if (error instanceof TypeError && error.message.includes('fetch')) {
+            errorMessage = 'Error de conexión con el servidor. Verifica que el backend esté corriendo.';
+        } else if (error.message && (error.message.includes('404') || error.message.includes('no encontrado'))) {
+            errorMessage = 'El endpoint de usuarios no está disponible. Verifica la configuración del backend.';
+        }
+        
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 2rem;">
             <div class="empty-admin-state">
                 <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <h3>Error al cargar usuarios</h3>
-                <p>${error.message || 'Error desconocido'}</p>
+                <p>${sanitizeHTML(errorMessage)}</p>
+                <p style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.5rem;">
+                    Verifica que el endpoint <code>/admin/usuarios</code> o <code>/usuarios</code> esté disponible en el backend.
+                </p>
             </div>
         </td></tr>`;
-        showToast(error.message || 'Error al cargar usuarios', 'error');
+        showToast(errorMessage, 'error');
     }
 }
 
